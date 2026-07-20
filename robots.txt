@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://farja-king.github.io/print-prep/sitemap.xml

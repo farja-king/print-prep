@@ -152,6 +152,23 @@
     flex-wrap: wrap;
     margin: 10px 0 2px;
   }
+  .start-over-btn{
+    display:block;
+    width:100%;
+    margin-top:14px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    padding:12px 10px;
+    border:2px solid #7A1210;
+    background:#D32F2F;
+    color:#fff;
+    cursor:pointer;
+  }
+  .start-over-btn:hover{background:#B71C1C;}
+  .start-over-btn:active{transform:translateY(1px);}
   .garment-preview .label-inline {
     font-family:'IBM Plex Mono',monospace;
     font-size: 11px;
@@ -206,6 +223,20 @@
     display: flex;
     align-items: flex-start;
   }
+
+  /* Shows what a pending resize crop will keep vs. cut — box-shadow spread darkens everywhere
+     outside its own box, and .preview-holder's overflow:auto clips that spread at the edges, so
+     nothing leaks past the scrollable viewport. Positioned in JS via canvas.offsetLeft/offsetTop,
+     which stay correct regardless of zoom or centering since they're relative to preview-holder. */
+  #cropOverlay{
+    position:absolute;
+    top:0; left:0; width:0; height:0;
+    box-shadow:0 0 0 9999px rgba(0,0,0,0.6);
+    border:2px dashed #fff;
+    pointer-events:none;
+    display:none;
+  }
+  #cropOverlay.show{display:block;}
 
   canvas{
     max-width: 100%;
@@ -381,6 +412,7 @@
         </div>
         <div class="preview-holder">
            <canvas id="canvas"></canvas>
+           <div id="cropOverlay"></div>
         </div>
         <div class="garment-preview">
           <span class="label-inline">Garment Preview</span>
@@ -399,6 +431,7 @@
         </div>
         <div class="meta"><span>output <b id="dims">—</b></span><span id="alphaInfo">—</span><span id="size">—</span></div>
       </div>
+      <button class="start-over-btn" id="reset">Start Over — Erase Everything</button>
     </div>
 
     <div class="tools">
@@ -448,8 +481,8 @@
         <button class="action" id="applyBgRemove" style="margin-bottom:6px;">Lock In Removal</button>
         <button class="action ghost" id="resetBgRemove" data-original-text="Reset Background Extraction">Reset Background Extraction</button>
         <div class="history-controls">
-          <button class="action ghost" id="bgHistoryBack" style="flex:1;" disabled>← Go Back</button>
-          <button class="action ghost" id="bgHistoryRedo" style="flex:1;" disabled>Redo →</button>
+          <button class="action ghost history-back-btn" id="bgHistoryBack" style="flex:1;" disabled>← Go Back</button>
+          <button class="action ghost history-redo-btn" id="bgHistoryRedo" style="flex:1;" disabled>Redo →</button>
         </div>
         <div class="progress-track" id="bgProgressTrack"><div class="progress-fill" id="bgProgressFill"></div></div>
         <div id="bgStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a8578;margin-top:8px;min-height:14px;"></div>
@@ -495,7 +528,7 @@
         <button class="action" id="applyUpscale">Execute HD Upscale</button>
       </div>
 
-      <div class="tool-block">
+      <div class="tool-block" id="resizeBlock">
         <h3><span class="n">03</span> Resize to spec</h3>
         <div class="row" style="margin-bottom:12px;">
           <div style="flex:1">
@@ -515,7 +548,38 @@
           <input type="checkbox" id="lockAspect" checked> Lock Aspect Ratio
         </label>
         <button class="action ghost" id="presetMerch">Merch 4500×5400</button>
+        <div style="height:12px"></div>
+        <p style="font-size:11px;color:#8a8578;margin:0 0 8px;line-height:1.4;">If the crop cuts off part of the design, nudge it with these before applying — nothing is touched until you hit Apply.</p>
+        <div class="row" style="align-items: center; margin-bottom: 8px;">
+          <div style="flex:1">
+            <label>Crop Tightness (frees up room to pan both ways, small upscale trade-off)</label>
+            <input type="range" id="cropTightness" min="0" max="50" value="0">
+          </div>
+          <div style="width:60px; text-align:right; margin-top:8px;">
+            <input type="number" id="cropTightnessVal" min="0" max="50" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+          </div>
+        </div>
+        <div class="row" style="align-items: center; margin-bottom: 8px;">
+          <div style="flex:1">
+            <label>Crop Position — Horizontal</label>
+            <input type="range" id="cropOffsetX" min="0" max="100" value="50">
+          </div>
+          <div style="width:60px; text-align:right; margin-top:8px;">
+            <input type="number" id="cropOffsetXVal" min="0" max="100" value="50" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+          </div>
+        </div>
+        <div class="row" style="align-items: center;">
+          <div style="flex:1">
+            <label>Crop Position — Vertical</label>
+            <input type="range" id="cropOffsetY" min="0" max="100" value="50">
+          </div>
+          <div style="width:60px; text-align:right; margin-top:8px;">
+            <input type="number" id="cropOffsetYVal" min="0" max="100" value="50" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+          </div>
+        </div>
         <div style="height:8px"></div>
+        <button class="action ghost" id="cropPreviewToggle" style="margin-bottom:6px;">Preview Crop Area</button>
+        <button class="action ghost history-back-btn" id="resizeHistoryBack" style="margin-bottom:6px;" disabled>← Undo</button>
         <button class="action" id="applyResize">Apply resize</button>
       </div>
 
@@ -577,8 +641,6 @@
         <h3><span class="n">06</span> Final Preview & Export</h3>
         <button class="action" id="download" data-original-text="Download Master PNG (300 DPI)">Download Master PNG (300 DPI)</button>
       </div>
-
-      <button class="action ghost" id="reset">Start over</button>
     </div>
   </div>
 
@@ -662,10 +724,8 @@ function saveHistory() {
 }
 
 function updateHistoryButtons() {
-  const backBtn = document.getElementById('bgHistoryBack');
-  const redoBtn = document.getElementById('bgHistoryRedo');
-  if (backBtn) backBtn.disabled = historyStack.length <= 1;
-  if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+  document.querySelectorAll('.history-back-btn').forEach(b => { b.disabled = historyStack.length <= 1; });
+  document.querySelectorAll('.history-redo-btn').forEach(b => { b.disabled = redoStack.length === 0; });
 }
 
 async function restoreFromHistory(entry) {
@@ -707,7 +767,20 @@ function syncHalftoneCache() {
 }
 
 let preColorAdjustCacheCanvas = null;
+// The true "before any colour adjustment" snapshot for this stage — separate from
+// preColorAdjustCacheCanvas, which Apply deliberately moves forward to support live-previewing
+// further tweaks on top of an already-applied adjustment. Reset must restore from THIS one,
+// otherwise clicking Reset after a previous Apply only undoes changes since that Apply, not the
+// whole adjustment — which is what "reset doesn't always reset the image" was.
+let colorAdjustResetCanvas = null;
 function syncColorAdjustCache() {
+  preColorAdjustCacheCanvas = document.createElement('canvas');
+  preColorAdjustCacheCanvas.width = canvas.width;
+  preColorAdjustCacheCanvas.height = canvas.height;
+  preColorAdjustCacheCanvas.getContext('2d').drawImage(canvas, 0, 0);
+  colorAdjustResetCanvas = preColorAdjustCacheCanvas;
+}
+function syncColorAdjustLiveBaseline() {
   preColorAdjustCacheCanvas = document.createElement('canvas');
   preColorAdjustCacheCanvas.width = canvas.width;
   preColorAdjustCacheCanvas.height = canvas.height;
@@ -805,6 +878,7 @@ function renderZoomSize(){
   canvas.style.width = (canvas.width * zoomPct / 100) + 'px';
   zoomLevelInput.value = zoomPct;
   zoomValLabel.textContent = Math.round(zoomPct) + '%';
+  updateCropOverlay();
 }
 
 // Used right after loading/replacing the image: picks a zoom level that fits the image inside
@@ -1163,7 +1237,7 @@ function applyColorAdjustLive() {
 
 document.getElementById('applyColorAdjust').addEventListener('click', (e) => {
   runBusy(e.target, () => {
-    syncColorAdjustCache();
+    syncColorAdjustLiveBaseline();
     syncHalftoneCache();
     saveHistory();
     updateMeta();
@@ -1175,6 +1249,7 @@ document.getElementById('resetColorAdjust').addEventListener('click', (e) => {
     caContrast.value = 0; caContrastVal.value = 0;
     caSaturation.value = 0; caSaturationVal.value = 0;
     caVibrancy.value = 0; caVibrancyVal.value = 0;
+    if (colorAdjustResetCanvas) preColorAdjustCacheCanvas = colorAdjustResetCanvas;
     runColorAdjust();
     syncHalftoneCache();
     saveHistory();
@@ -1357,25 +1432,100 @@ document.getElementById('presetMerch').addEventListener('click', ()=>{
   hInput.value = 5400;
   originalWidthForRatio = 4500;
   originalHeightForRatio = 5400;
+  updateCropOverlay();
 });
+
+// Crop position: sliders at 50/50 reproduce the old always-centered behaviour exactly (maxX/maxY
+// * 0.5). Away from 50, they pan the crop window within the image bounds so a design that isn't
+// centered in the source doesn't get sliced off with no way to adjust it short of redoing the
+// whole step.
+const cropTightness = document.getElementById('cropTightness');
+const cropTightnessVal = document.getElementById('cropTightnessVal');
+const cropOffsetX = document.getElementById('cropOffsetX');
+const cropOffsetXVal = document.getElementById('cropOffsetXVal');
+const cropOffsetY = document.getElementById('cropOffsetY');
+const cropOffsetYVal = document.getElementById('cropOffsetYVal');
+const cropOverlay = document.getElementById('cropOverlay');
+const cropPreviewBtn = document.getElementById('cropPreviewToggle');
+let cropPreviewOn = false;
+
+function computeCropRect() {
+  let tw = parseFloat(wInput.value);
+  let th = parseFloat(hInput.value);
+  if (!tw || !th) return null;
+  if (resizeUnit.value === 'mm') {
+    tw = Math.round(tw * (300 / 25.4));
+    th = Math.round(th * (300 / 25.4));
+  } else {
+    tw = Math.round(tw);
+    th = Math.round(th);
+  }
+  const srcRatio = canvas.width / canvas.height, dstRatio = tw / th;
+  let sw = canvas.width, sh = canvas.height;
+  if (srcRatio > dstRatio) sw = canvas.height * dstRatio;
+  else sh = canvas.width / dstRatio;
+  // Shrinking the crop box below its max-fit size frees up pan room on whichever axis would
+  // otherwise be maxed out with nowhere to move (see computeCropRect's default behaviour above) —
+  // the cost is a small upscale to reach tw/th from a now-smaller source region.
+  const tightnessPct = Math.max(0, Math.min(50, parseFloat(cropTightness.value) || 0)) / 100;
+  sw *= (1 - tightnessPct);
+  sh *= (1 - tightnessPct);
+  const maxX = Math.max(0, canvas.width - sw), maxY = Math.max(0, canvas.height - sh);
+  const hPct = Math.max(0, Math.min(100, parseFloat(cropOffsetX.value) || 0)) / 100;
+  const vPct = Math.max(0, Math.min(100, parseFloat(cropOffsetY.value) || 0)) / 100;
+  return { sx: maxX * hPct, sy: maxY * vPct, sw, sh, tw, th };
+}
+
+function hideCropPreview() {
+  cropPreviewOn = false;
+  cropOverlay.classList.remove('show');
+  cropPreviewBtn.textContent = 'Preview Crop Area';
+  cropPreviewBtn.classList.remove('done-state');
+}
+
+function updateCropOverlay() {
+  if (!cropPreviewOn) return;
+  const rect = computeCropRect();
+  if (!rect || !canvas.offsetWidth) { cropOverlay.classList.remove('show'); return; }
+  const scale = canvas.offsetWidth / canvas.width;
+  cropOverlay.style.left = (canvas.offsetLeft + rect.sx * scale) + 'px';
+  cropOverlay.style.top = (canvas.offsetTop + rect.sy * scale) + 'px';
+  cropOverlay.style.width = (rect.sw * scale) + 'px';
+  cropOverlay.style.height = (rect.sh * scale) + 'px';
+  cropOverlay.classList.add('show');
+}
+
+cropPreviewBtn.addEventListener('click', () => {
+  cropPreviewOn = !cropPreviewOn;
+  cropPreviewBtn.textContent = cropPreviewOn ? 'Hide Crop Preview' : 'Preview Crop Area';
+  cropPreviewBtn.classList.toggle('done-state', cropPreviewOn);
+  if (!cropPreviewOn) cropOverlay.classList.remove('show'); else updateCropOverlay();
+});
+
+cropTightness.addEventListener('input', e => { cropTightnessVal.value = e.target.value; updateCropOverlay(); });
+cropTightnessVal.addEventListener('input', e => {
+  const v = Math.max(0, Math.min(50, parseInt(e.target.value) || 0));
+  cropTightness.value = v;
+  updateCropOverlay();
+});
+
+[cropOffsetX, cropOffsetY].forEach((slider, i) => {
+  const numEl = i === 0 ? cropOffsetXVal : cropOffsetYVal;
+  slider.addEventListener('input', e => { numEl.value = e.target.value; updateCropOverlay(); });
+  numEl.addEventListener('input', e => {
+    const v = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+    slider.value = v;
+    updateCropOverlay();
+  });
+});
+[wInput, hInput].forEach(el => el.addEventListener('input', updateCropOverlay));
+resizeUnit.addEventListener('change', updateCropOverlay);
 
 document.getElementById('applyResize').addEventListener('click', (e)=>{
   runBusy(e.target, ()=>{
-    let tw = parseFloat(wInput.value);
-    let th = parseFloat(hInput.value);
-    if(!tw || !th) return;
-    if (resizeUnit.value === 'mm') { 
-      tw = Math.round(tw * (300 / 25.4)); 
-      th = Math.round(th * (300 / 25.4)); 
-    }
-    else { 
-      tw = Math.round(tw); 
-      th = Math.round(th); 
-    }
-    const srcRatio = canvas.width / canvas.height, dstRatio = tw / th;
-    let sx=0, sy=0, sw=canvas.width, sh=canvas.height;
-    if(srcRatio > dstRatio){ sw = canvas.height * dstRatio; sx = (canvas.width - sw)/2; }
-    else { sh = canvas.width / dstRatio; sy = (canvas.height - sh)/2; }
+    const rect = computeCropRect();
+    if (!rect) return;
+    const { sx, sy, sw, sh, tw, th } = rect;
     const tmp = document.createElement('canvas');
     tmp.width = canvas.width; tmp.height = canvas.height;
     tmp.getContext('2d').drawImage(canvas,0,0);
@@ -1405,6 +1555,7 @@ document.getElementById('applyResize').addEventListener('click', (e)=>{
     syncColorAdjustCache();
     saveHistory();
     updateMeta();
+    hideCropPreview();
   });
 });
 
@@ -1421,15 +1572,23 @@ document.getElementById('applyHalftone').addEventListener('click', (e)=>{
 const bgHistoryBackBtn = document.getElementById('bgHistoryBack');
 const bgHistoryRedoBtn = document.getElementById('bgHistoryRedo');
 bgHistoryBackBtn.addEventListener('click', async () => {
-  bgHistoryBackBtn.disabled = true;
-  bgHistoryRedoBtn.disabled = true;
+  document.querySelectorAll('.history-back-btn, .history-redo-btn').forEach(b => { b.disabled = true; });
   await undo();
   updateHistoryButtons();
 });
 bgHistoryRedoBtn.addEventListener('click', async () => {
-  bgHistoryBackBtn.disabled = true;
-  bgHistoryRedoBtn.disabled = true;
+  document.querySelectorAll('.history-back-btn, .history-redo-btn').forEach(b => { b.disabled = true; });
   await redo();
+  updateHistoryButtons();
+});
+
+// Same shared history stack as the background-removal Undo/Redo above — this just gives quick
+// access to it from the Resize section too, e.g. to undo a resize that cropped off part of the
+// design without needing to scroll back up to box 00.
+const resizeHistoryBackBtn = document.getElementById('resizeHistoryBack');
+resizeHistoryBackBtn.addEventListener('click', async () => {
+  document.querySelectorAll('.history-back-btn, .history-redo-btn').forEach(b => { b.disabled = true; });
+  await undo();
   updateHistoryButtons();
 });
 

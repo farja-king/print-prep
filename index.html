@@ -615,9 +615,9 @@ const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const dimsEl = document.getElementById('dims');
 const sizeEl = document.getElementById('size');
 
-// Simple public counter (countapi.xyz) — this is a static, backend-less site, so there's
-// nowhere of our own to store a shared running total. This service just increments/reads a
-// named number with no auth, which is fine for a rough "how's it doing" stat but isn't
+// Simple public counter (abacus.jasoncameron.dev) — this is a static, backend-less site, so
+// there's nowhere of our own to store a shared running total. This service just increments/reads
+// a named number with no auth, which is fine for a rough "how's it doing" stat but isn't
 // tamper-proof — if it's ever unreachable, the display just falls back to "—" rather than
 // breaking anything else on the page.
 const STATS_NAMESPACE = 'crystalgroupz-print-prep';
@@ -625,7 +625,7 @@ const visitCountEl = document.getElementById('visitCount');
 const downloadCountEl = document.getElementById('downloadCount');
 async function bumpCounter(key, displayEl) {
   try {
-    const res = await fetch(`https://api.countapi.xyz/hit/${STATS_NAMESPACE}/${key}`);
+    const res = await fetch(`https://abacus.jasoncameron.dev/hit/${STATS_NAMESPACE}/${key}`);
     const data = await res.json();
     if (displayEl) displayEl.textContent = data.value.toLocaleString();
   } catch (e) {
@@ -634,7 +634,7 @@ async function bumpCounter(key, displayEl) {
 }
 async function readCounter(key, displayEl) {
   try {
-    const res = await fetch(`https://api.countapi.xyz/get/${STATS_NAMESPACE}/${key}`);
+    const res = await fetch(`https://abacus.jasoncameron.dev/get/${STATS_NAMESPACE}/${key}`);
     const data = await res.json();
     if (displayEl) displayEl.textContent = (data.value || 0).toLocaleString();
   } catch (e) {

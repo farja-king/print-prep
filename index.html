@@ -521,10 +521,9 @@
 
       <div class="tool-block">
         <h3><span class="n">04</span> Targeted Halftone</h3>
-        <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Detected colours in this image. Toggle which ones to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
-        <button class="action ghost" id="detectSwatches" style="margin-bottom:10px;">Detect Colours in Image</button>
+        <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Pick exactly which colours to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
         <button class="action ghost" id="colorPickToggle" style="margin-bottom:10px;">Enable Colour Picker (click image to add swatch)</button>
-        <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Detection only surfaces the most common colours — turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch, whether or not detection caught it.</p>
+        <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch.</p>
         <div id="swatchList" style="font-family:'IBM Plex Mono',monospace;"></div>
         <div style="height:8px"></div>
         <button class="action" id="applyHalftone" style="margin-bottom: 6px;">Apply Targeted Halftone</button>
@@ -1028,34 +1027,9 @@ alphaThreshVal.addEventListener('input', e => {
 let halftoneLiveTimeout = null;
 let swatches = [];
 
-function detectSwatches(){
-  const src = preHalftoneCacheCanvas || canvas;
-  const w = src.width, h = src.height;
-  const data = src.getContext('2d').getImageData(0, 0, w, h).data;
-  const buckets = new Map();
-  const step = Math.max(1, Math.round(Math.sqrt((w*h)/60000)));
-  for(let y=0; y<h; y+=step){
-    for(let x=0; x<w; x+=step){
-      const idx = (y*w+x)*4;
-      if(data[idx+3] < 40) continue;
-      const r=data[idx], g=data[idx+1], b=data[idx+2];
-      const key = [Math.round(r/16)*16, Math.round(g/16)*16, Math.round(b/16)*16].join(',');
-      let entry = buckets.get(key);
-      if(!entry){ entry = {count:0, r:0, g:0, b:0}; buckets.set(key, entry); }
-      entry.count++; entry.r += r; entry.g += g; entry.b += b;
-    }
-  }
-  const sorted = [...buckets.values()].sort((a,b)=>b.count-a.count).slice(0,8);
-  swatches = sorted.map((e,i)=>({
-    id:i, r:Math.round(e.r/e.count), g:Math.round(e.g/e.count), b:Math.round(e.b/e.count),
-    enabled:false, dotPitch:8, tolerance:40
-  }));
-  renderSwatchList();
-}
-
 function renderSwatchList(){
   const list = document.getElementById('swatchList');
-  if(!swatches.length){ list.innerHTML = '<p style="font-size:11px;color:#8a8578;">No colours detected yet.</p>'; return; }
+  if(!swatches.length){ list.innerHTML = '<p style="font-size:11px;color:#8a8578;">No colours picked yet — enable the colour picker and click the image.</p>'; return; }
   list.innerHTML = swatches.map((s,i)=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid #c9c2b2;flex-wrap:wrap;">
       <div style="width:22px;height:22px;border:1px solid #1B1B18;background:rgb(${s.r},${s.g},${s.b});flex:0 0 auto;"></div>
@@ -1091,8 +1065,6 @@ document.getElementById('swatchList').addEventListener('input', e => {
   }
   scheduleHalftonePreview();
 });
-
-document.getElementById('detectSwatches').addEventListener('click', () => detectSwatches());
 
 function renderHalftone(){
   if (!preHalftoneCacheCanvas) return;

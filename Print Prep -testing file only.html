@@ -129,6 +129,11 @@
     max-width: 100%;
     display:block;
     margin:auto;
+    /* Flex items default to flex-shrink:1, which was silently squashing the canvas back down to
+       fit preview-holder's width regardless of the requested zoom% — this is what capped visible
+       zoom growth well before the slider's 500% max. It must never shrink below its own explicit
+       width; margin:auto above still centers it whenever that width is smaller than the box. */
+    flex-shrink: 0;
     transform-origin: top left;
   }
 
@@ -288,7 +293,7 @@
           <span>Production View Setup</span>
           <div style="display:flex; gap:8px; align-items:center; font-family:'IBM Plex Sans',sans-serif; text-transform:none; letter-spacing:normal;">
              <label style="font-size:11px; color:#8a8578; margin:0;">Zoom (scroll to zoom on cursor):</label>
-             <input type="range" id="zoomLevel" min="10" max="500" value="100" style="width:80px; margin:0;">
+             <input type="range" id="zoomLevel" min="1" max="500" value="100" style="width:80px; margin:0;">
              <span id="zoomVal" style="font-size:11px; font-family:'IBM Plex Mono',monospace; font-weight:bold; width:35px; text-align:right;">100%</span>
           </div>
         </div>
@@ -421,6 +426,8 @@
         <h3><span class="n">04</span> Targeted Halftone</h3>
         <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Detected colours in this image. Toggle which ones to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
         <button class="action ghost" id="detectSwatches" style="margin-bottom:10px;">Detect Colours in Image</button>
+        <button class="action ghost" id="colorPickToggle" style="margin-bottom:10px;">Enable Colour Picker (click image to add swatch)</button>
+        <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Detection only surfaces the most common colours — turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch, whether or not detection caught it.</p>
         <div id="swatchList" style="font-family:'IBM Plex Mono',monospace;"></div>
         <div style="height:8px"></div>
         <button class="action" id="applyHalftone" style="margin-bottom: 6px;">Apply Targeted Halftone</button>
@@ -682,18 +689,24 @@ function renderZoomSize(){
 
 // Used right after loading/replacing the image: picks a zoom level that fits the image inside
 // the preview panel (like the old default did) without ever upscaling a smaller image past its
-// true size, rather than always dropping back to a literal 100%.
+// true size, rather than always dropping back to a literal 100%. Checks both width AND height —
+// width alone could still leave a tall image overflowing vertically at the "fit" percentage.
 function fitZoomToContainer(){
   const containerWidth = previewHolder.clientWidth || 600;
-  const fitPct = canvas.width ? Math.min(100, (containerWidth / canvas.width) * 100) : 100;
-  zoomPct = Math.max(10, Math.min(500, fitPct));
+  const containerHeight = previewHolder.clientHeight || 600;
+  const fitPct = (canvas.width && canvas.height)
+    ? Math.min(100, (containerWidth / canvas.width) * 100, (containerHeight / canvas.height) * 100)
+    : 100;
+  zoomPct = Math.max(1, Math.min(500, fitPct));
   renderZoomSize();
   previewHolder.scrollLeft = 0;
   previewHolder.scrollTop = 0;
 }
 
 function applyZoom(newPct, anchorClientX, anchorClientY){
-  newPct = Math.max(10, Math.min(500, newPct));
+  // Floor of 1%, not 10% — an 8x-upscaled image (e.g. 8000px+) can need well under 10% to fit
+  // the preview at all, and 10% was a hard wall the slider couldn't cross regardless of image size.
+  newPct = Math.max(1, Math.min(500, newPct));
   if(Math.abs(newPct - zoomPct) < 0.01) return;
 
   const holderRect = previewHolder.getBoundingClientRect();
@@ -1336,23 +1349,15 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
   bgHistoryRedoBtn.disabled = true;
 
   if(method === 'color') {
-    // Use the EXISTING preRemovalCanvas baseline — the same clean source the live slider preview
-    // already computes from — not the current on-screen canvas, which the sliders may already
-    // have processed. Recomputing from an already-processed canvas would flood-fill and erode it
-    // a second time, silently removing more than the sliders showed.
-    const sourceCanvas = preRemovalCanvas;
+    // The colour-key sliders already live-apply directly to the canvas as you drag them, so by
+    // the time this is clicked the canvas already shows the exact result. This is purely a
+    // checkpoint: commit what's already on screen (so future hole clicks/slider tweaks build on
+    // this point, and undo/redo has a step here) — no recompute, no pixel changes of its own.
     setBusy(btn, true, false);
     setTimeout(() => {
-      const w = sourceCanvas.width, h = sourceCanvas.height;
-      const imgData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
-      const tolerance = parseInt(colorTolerance.value);
-      const alphaCut = parseInt(alphaThreshold.value);
-      computeColorKeyRemoval(imgData.data, w, h, tolerance, alphaCut);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.putImageData(imgData, 0, 0);
-      // This commit becomes the new baseline for any further hole-removal clicks/slider tweaks.
       preRemovalCanvas = document.createElement('canvas');
-      preRemovalCanvas.width = w; preRemovalCanvas.height = h;
+      preRemovalCanvas.width = canvas.width;
+      preRemovalCanvas.height = canvas.height;
       preRemovalCanvas.getContext('2d').drawImage(canvas, 0, 0);
       holeSeeds = [];
       pristineSourceCanvas = document.createElement('canvas');
@@ -1416,12 +1421,17 @@ let brushOn = false, painting = false, lastPos = { x: 0, y: 0 };
 const brushToggleBtn = document.getElementById('brushToggle');
 const brushSizeVal = document.getElementById('brushSizeVal');
 
+function disableBrush() { brushOn = false; brushToggleBtn.textContent = 'Enable brush'; brushToggleBtn.classList.remove('done-state'); }
+function disableHoleRemove() { holeRemoveOn = false; holeRemoveBtn.textContent = 'Enable Hole Removal (click enclosed gaps)'; holeRemoveBtn.classList.remove('done-state'); }
+function disableColorPick() { colorPickOn = false; colorPickBtn.textContent = 'Enable Colour Picker (click image to add swatch)'; colorPickBtn.classList.remove('done-state'); }
+
 brushToggleBtn.addEventListener('click', (e)=>{
   brushOn = !brushOn;
   brushToggleBtn.textContent = brushOn ? 'Disable brush' : 'Enable brush';
   brushToggleBtn.classList.toggle('done-state', brushOn);
   canvas.classList.toggle('brush-active', brushOn);
-  if (brushOn && holeRemoveOn) { holeRemoveOn = false; holeRemoveBtn.textContent = 'Enable Hole Removal (click enclosed gaps)'; holeRemoveBtn.classList.remove('done-state'); }
+  if (brushOn && holeRemoveOn) disableHoleRemove();
+  if (brushOn && colorPickOn) disableColorPick();
 });
 
 let holeRemoveOn = false;
@@ -1431,7 +1441,32 @@ holeRemoveBtn.addEventListener('click', () => {
   holeRemoveBtn.textContent = holeRemoveOn ? 'Disable Hole Removal' : 'Enable Hole Removal (click enclosed gaps)';
   holeRemoveBtn.classList.toggle('done-state', holeRemoveOn);
   canvas.classList.toggle('brush-active', holeRemoveOn);
-  if (holeRemoveOn && brushOn) { brushOn = false; brushToggleBtn.textContent = 'Enable brush'; brushToggleBtn.classList.remove('done-state'); }
+  if (holeRemoveOn && brushOn) disableBrush();
+  if (holeRemoveOn && colorPickOn) disableColorPick();
+});
+
+let colorPickOn = false;
+const colorPickBtn = document.getElementById('colorPickToggle');
+colorPickBtn.addEventListener('click', () => {
+  colorPickOn = !colorPickOn;
+  colorPickBtn.textContent = colorPickOn ? 'Disable Colour Picker' : 'Enable Colour Picker (click image to add swatch)';
+  colorPickBtn.classList.toggle('done-state', colorPickOn);
+  canvas.classList.toggle('brush-active', colorPickOn);
+  if (colorPickOn && brushOn) disableBrush();
+  if (colorPickOn && holeRemoveOn) disableHoleRemove();
+});
+
+canvas.addEventListener('click', (e) => {
+  if (!colorPickOn) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / rect.width * canvas.width);
+  const y = Math.floor((e.clientY - rect.top) / rect.height * canvas.height);
+  if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return;
+  const pixel = ctx.getImageData(x, y, 1, 1).data;
+  if (pixel[3] === 0) return; // transparent — nothing there to pick
+  swatches.push({ id: swatches.length, r: pixel[0], g: pixel[1], b: pixel[2], enabled: true, dotPitch: 8, tolerance: 40 });
+  renderSwatchList();
+  scheduleHalftonePreview();
 });
 
 canvas.addEventListener('click', (e) => {

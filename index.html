@@ -307,16 +307,6 @@
     color: #2e7d32;
   }
 
-  .stats-line{
-    display:flex;
-    gap:18px;
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px;
-    color:#8a8578;
-    margin:-14px 0 24px;
-  }
-  .stats-line b{color:var(--ink);}
-
   .row{display:flex; gap:8px; margin-bottom:8px;}
   .row input[type=number]{
     width:100%;
@@ -371,11 +361,6 @@
     <div class="tag">Production Suite • DTF/Print Ready</div>
   </header>
   <p class="sub">Production Tool. Built specifically for complex apparel illustrations,<br>High-density DTF processing.<br>All processing runs locally in your browser.</p>
-
-  <div class="stats-line" id="statsLine">
-    <span>Visits: <b id="visitCount">—</b></span>
-    <span>Images downloaded: <b id="downloadCount">—</b></span>
-  </div>
 
   <div class="drop" id="drop">
     <p>Drop an image here, or click to choose</p>
@@ -632,17 +617,7 @@ async function bumpCounter(key, displayEl) {
     if (displayEl) displayEl.textContent = '—';
   }
 }
-async function readCounter(key, displayEl) {
-  try {
-    const res = await fetch(`https://abacus.jasoncameron.dev/get/${STATS_NAMESPACE}/${key}`);
-    const data = await res.json();
-    if (displayEl) displayEl.textContent = (data.value || 0).toLocaleString();
-  } catch (e) {
-    if (displayEl) displayEl.textContent = '—';
-  }
-}
 bumpCounter('visits', visitCountEl);
-readCounter('downloads', downloadCountEl);
 
 const bgMethod = document.getElementById('bgMethod');
 const colorKeyControls = document.getElementById('colorKeyControls');

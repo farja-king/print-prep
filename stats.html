@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Print Prep — Stats (private)</title>
+<style>
+  body{
+    font-family:'IBM Plex Mono',monospace;
+    background:#EDE8DF;
+    color:#1B1B18;
+    max-width:480px;
+    margin:60px auto;
+    padding:0 20px;
+  }
+  h1{font-size:16px; text-transform:uppercase; letter-spacing:.04em;}
+  .stat{
+    background:#FBFAF6;
+    border:1px solid #1B1B18;
+    padding:16px;
+    margin-bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .stat b{font-size:28px;}
+  .note{font-size:11px;color:#8a8578;line-height:1.5;margin-top:20px;}
+  button{
+    font-family:'IBM Plex Mono',monospace;
+    padding:8px 14px;
+    border:1px solid #1B1B18;
+    background:#1B1B18;
+    color:#FBFAF6;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+  <h1>Print Prep — Real Usage Stats</h1>
+  <div class="stat"><span>Visits</span><b id="visits">—</b></div>
+  <div class="stat"><span>Images downloaded</span><b id="downloads">—</b></div>
+  <button id="refresh">Refresh</button>
+  <p class="note">
+    Private page — not linked from the main site, not indexed by search engines. Reads the same
+    counters the app quietly tracks in the background (no display on the public page). Note some
+    visitors' ad-blockers (e.g. Brave Shields) block this tracker, so true totals run a bit higher
+    than shown here.
+  </p>
+<script>
+  const NS = 'crystalgroupz-print-prep';
+  async function load(){
+    for (const key of ['visits','downloads']) {
+      const el = document.getElementById(key);
+      try {
+        const res = await fetch(`https://abacus.jasoncameron.dev/get/${NS}/${key}`);
+        const data = await res.json();
+        el.textContent = (data.value || 0).toLocaleString();
+      } catch(e) {
+        el.textContent = '—';
+      }
+    }
+  }
+  document.getElementById('refresh').addEventListener('click', load);
+  load();
+</script>
+</body>
+</html>

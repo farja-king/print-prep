@@ -402,7 +402,7 @@
     </div>
 
     <div class="tools">
-      <div class="tool-block">
+      <div class="tool-block" id="bgRemovalBlock">
         <h3><span class="n">00</span> Remove background</h3>
         <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Adjust sliders below to your specification, then hit Apply.</p>
         <div class="row" style="margin-bottom: 12px;">
@@ -473,7 +473,7 @@
         <button class="action ghost" id="brushToggle">Enable brush</button>
       </div>
 
-      <div class="tool-block">
+      <div class="tool-block" id="upscaleBlock">
         <h3><span class="n">02</span> Upscale & Smooth (HD)</h3>
         <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Browser-side resampling with edge smoothing.</p>
         <div class="row">
@@ -519,7 +519,7 @@
         <button class="action" id="applyResize">Apply resize</button>
       </div>
 
-      <div class="tool-block">
+      <div class="tool-block" id="halftoneBlock">
         <h3><span class="n">04</span> Targeted Halftone</h3>
         <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Pick exactly which colours to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
         <button class="action ghost" id="colorPickToggle" style="margin-bottom:10px;">Enable Colour Picker (click image to add swatch)</button>
@@ -761,13 +761,13 @@ function setBusy(btn, on, isResetAction = false) {
   }
 }
 
-function runBusy(btn, work, isResetAction = false){
+function runBusy(btn, work, isResetAction = false, onDone = null){
   setBusy(btn, true, isResetAction);
   requestAnimationFrame(()=>{
     setTimeout(()=>{
-      try{ 
-        work(); 
-        setBusy(btn, false, isResetAction);
+      try{
+        work();
+        if (onDone) onDone(); else setBusy(btn, false, isResetAction);
       } catch(e) {
         console.error(e);
         btn.textContent = "Error";
@@ -776,6 +776,18 @@ function runBusy(btn, work, isResetAction = false){
       }
     }, 40);
   });
+}
+
+// Once a one-shot, destructive/compounding step (background removal, upscale, halftone) is
+// applied, every control in that tool-block is disabled — including its own undo/reset buttons —
+// so it can't be re-triggered or fiddled with in a way that quietly re-processes an
+// already-processed canvas (which is what was compounding/breaking things). The only way back
+// into that step afterward is the page-level "Start over" button.
+function lockSection(container, triggerBtn, lockedLabel) {
+  container.querySelectorAll('button, input, select').forEach(el => { el.disabled = true; });
+  triggerBtn.classList.remove('busy');
+  triggerBtn.classList.add('done-state');
+  triggerBtn.textContent = lockedLabel;
 }
 
 const previewHolder = document.querySelector('.preview-holder');
@@ -1296,7 +1308,7 @@ document.getElementById('applyUpscale').addEventListener('click', (e) => {
     syncColorAdjustCache();
     saveHistory();
     updateMeta();
-  });
+  }, false, () => lockSection(document.getElementById('upscaleBlock'), e.target, "✓ Locked — Start Over to redo"));
 });
 
 resizeUnit.addEventListener('change', () => {
@@ -1403,7 +1415,7 @@ document.getElementById('applyHalftone').addEventListener('click', (e)=>{
     syncColorAdjustCache();
     saveHistory();
     updateMeta();
-  });
+  }, false, () => lockSection(document.getElementById('halftoneBlock'), e.target, "✓ Locked — Start Over to redo"));
 });
 
 const bgHistoryBackBtn = document.getElementById('bgHistoryBack');
@@ -1453,9 +1465,7 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
     syncColorAdjustCache();
       saveHistory();
       updateMeta();
-      setBusy(btn, false, false);
-      btn.textContent = "Done";
-      resetBtn.disabled = false;
+      lockSection(document.getElementById('bgRemovalBlock'), btn, "✓ Locked — Start Over to redo");
     }, 40);
   } else {
     preRemovalCanvas = document.createElement('canvas');
@@ -1487,9 +1497,7 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
         saveHistory();
         updateMeta();
         track.classList.remove('show');
-        setBusy(btn, false, false);
-        btn.textContent = "Done";
-        resetBtn.disabled = false;
+        lockSection(document.getElementById('bgRemovalBlock'), btn, "✓ Locked — Start Over to redo");
       };
       im.src = URL.createObjectURL(resultBlob);
     } catch(err) {

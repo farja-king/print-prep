@@ -106,6 +106,49 @@
     align-items:center;
   }
   
+  .garment-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0 2px;
+  }
+  .garment-preview .label-inline {
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #8a8578;
+  }
+  .swatch-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .swatch-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    padding: 0;
+    box-sizing: border-box;
+    display: block;
+  }
+  .swatch-btn.active {
+    outline: 2px solid var(--thread-red);
+    outline-offset: 2px;
+  }
+  .swatch-btn.custom-swatch {
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    overflow: hidden;
+    position: relative;
+  }
+  .swatch-btn.custom-swatch input[type=color] {
+    position: absolute;
+    inset: -4px;
+    opacity: 0;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
   .preview-holder {
     position: relative;
     width: 100%;
@@ -300,6 +343,21 @@
         <div class="preview-holder">
            <canvas id="canvas"></canvas>
         </div>
+        <div class="garment-preview">
+          <span class="label-inline">Garment Preview</span>
+          <div class="swatch-row" id="garmentSwatchRow">
+            <button type="button" class="swatch-btn active" data-color="original" title="Original" style="background:#EDE8DF;"></button>
+            <button type="button" class="swatch-btn" data-color="#121212" title="Black" style="background:#121212;"></button>
+            <button type="button" class="swatch-btn" data-color="#FFFFFF" title="White" style="background:#FFFFFF;"></button>
+            <button type="button" class="swatch-btn" data-color="#1D2951" title="Navy" style="background:#1D2951;"></button>
+            <button type="button" class="swatch-btn" data-color="#E40000" title="Red" style="background:#E40000;"></button>
+            <button type="button" class="swatch-btn" data-color="#B0B0B0" title="Heather Grey" style="background:#B0B0B0;"></button>
+            <button type="button" class="swatch-btn" data-color="#EDE0C8" title="Natural" style="background:#EDE0C8;"></button>
+            <label class="swatch-btn custom-swatch" title="Custom colour">
+              <input type="color" id="customGarmentColor" value="#EDE8DF">
+            </label>
+          </div>
+        </div>
         <div class="meta"><span>output <b id="dims">—</b></span><span id="alphaInfo">—</span><span id="size">—</span></div>
       </div>
     </div>
@@ -479,14 +537,6 @@
 
       <div class="tool-block">
         <h3><span class="n">06</span> Final Preview & Export</h3>
-        <div style="margin-bottom:12px;">
-          <label>Final Garment Preview</label>
-          <div style="display:flex; gap:6px;">
-            <button class="action ghost" id="finalTransparent" style="flex:1;">Original</button>
-            <button class="action ghost" id="finalBlack" style="flex:1;">Black</button>
-            <button class="action ghost" id="finalWhite" style="flex:1;">White</button>
-          </div>
-        </div>
         <button class="action" id="download" data-original-text="Download Master PNG (300 DPI)">Download Master PNG (300 DPI)</button>
       </div>
 
@@ -748,32 +798,36 @@ canvasPanel.addEventListener('wheel', e => {
   applyZoom(zoomPct * factor, e.clientX, e.clientY);
 }, { passive:false });
 
-function setGarmentBackground(mode){
+function setGarmentBackground(color){
   canvas.style.backgroundImage = '';
-  canvas.style.backgroundColor = '';
   canvas.style.backgroundSize = '';
   canvas.style.backgroundPosition = '';
   canvas.style.backgroundRepeat = '';
-
-  if(mode === 'black'){
-    canvas.style.backgroundColor = '#121212';
-  } else if(mode === 'white'){
-    canvas.style.backgroundColor = '#FFFFFF';
-  } else {
-    // "Original" — the same neutral paper tone as the rest of the workbench, rather than a
-    // checkerboard. Solid colors have been reliable throughout (black/white always worked);
-    // this sidesteps the checkerboard rendering issue entirely instead of chasing it further,
-    // and doubles as a genuinely useful third option: a plain neutral backdrop that isn't
-    // stark black or white, closer to what a lot of garments actually look like.
-    canvas.style.backgroundColor = '#EDE8DF';
-  }
-
+  // "Original" — the same neutral paper tone as the rest of the workbench, rather than a
+  // checkerboard. Solid colors have been reliable throughout; this sidesteps the checkerboard
+  // rendering issue entirely instead of chasing it further, and doubles as a genuinely useful
+  // option: a plain neutral backdrop that isn't stark black or white.
+  canvas.style.backgroundColor = (color === 'original') ? '#EDE8DF' : color;
   void canvas.offsetHeight;
 }
 
-document.getElementById('finalTransparent').addEventListener('click', () => setGarmentBackground('original'));
-document.getElementById('finalBlack').addEventListener('click', () => setGarmentBackground('black'));
-document.getElementById('finalWhite').addEventListener('click', () => setGarmentBackground('white'));
+function setActiveSwatch(el){
+  document.querySelectorAll('#garmentSwatchRow .swatch-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+document.querySelectorAll('#garmentSwatchRow .swatch-btn[data-color]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setGarmentBackground(btn.dataset.color);
+    setActiveSwatch(btn);
+  });
+});
+
+const customGarmentColorInput = document.getElementById('customGarmentColor');
+customGarmentColorInput.addEventListener('input', (e) => {
+  setGarmentBackground(e.target.value);
+  setActiveSwatch(customGarmentColorInput.closest('.swatch-btn'));
+});
 
 bgMethod.addEventListener('change', () => {
   const isColor = bgMethod.value === 'color';

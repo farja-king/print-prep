@@ -111,7 +111,7 @@
   }
   .drop.drag{border-color:var(--thread-red); background:#fff;}
   .drop p{margin:0; font-size:15px;}
-  .drop .hint{font-family:'IBM Plex Mono',monospace; font-size:11px; color:#8a8578; margin-top:8px;}
+  .drop .hint{font-family:'IBM Plex Mono',monospace; font-size:11px; color:#000;font-weight:500; margin-top:8px;}
   input[type=file]{display:none;}
 
   .stage{display:none; margin-top:28px;}
@@ -138,7 +138,7 @@
     font-size:11px;
     text-transform:uppercase;
     letter-spacing:.06em;
-    color:#8a8578;
+    color:#000;font-weight:500;
     margin-bottom:10px;
     display:flex; 
     justify-content:space-between; 
@@ -174,7 +174,7 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: .06em;
-    color: #8a8578;
+    color:#000;font-weight:500;
   }
   .swatch-row { display:flex; gap:6px; flex-wrap:wrap; }
   .swatch-btn {
@@ -346,14 +346,14 @@
     padding:6px 8px;
     border:1px solid #c9c2b2;
   }
-  .row label{font-size:11px; color:#8a8578; display:block; margin-bottom:3px; font-family:'IBM Plex Mono',monospace;}
+  .row label{font-size:11px; color:#000;font-weight:500; display:block; margin-bottom:3px; font-family:'IBM Plex Mono',monospace;}
 
   input[type=range]{width:100%; accent-color:var(--thread-red);}
 
   .meta{
     font-family:'IBM Plex Mono',monospace;
     font-size:11px;
-    color:#8a8578;
+    color:#000;font-weight:500;
     margin-top:6px;
     display:flex;
     justify-content:space-between;
@@ -363,7 +363,7 @@
   .footnote{
     margin-top:34px;
     font-size:12px;
-    color:#8a8578;
+    color:#000;font-weight:500;
     border-top:1px solid var(--paper-line);
     padding-top:14px;
     line-height:1.6;
@@ -405,7 +405,7 @@
         <div class="label">
           <span>Production View Setup</span>
           <div style="display:flex; gap:8px; align-items:center; font-family:'IBM Plex Sans',sans-serif; text-transform:none; letter-spacing:normal;">
-             <label style="font-size:11px; color:#8a8578; margin:0;">Zoom (scroll to zoom on cursor):</label>
+             <label style="font-size:11px; color:#000;font-weight:500; margin:0;">Zoom (scroll to zoom on cursor):</label>
              <input type="range" id="zoomLevel" min="1" max="500" value="100" style="width:80px; margin:0;">
              <span id="zoomVal" style="font-size:11px; font-family:'IBM Plex Mono',monospace; font-weight:bold; width:35px; text-align:right;">100%</span>
           </div>
@@ -437,7 +437,7 @@
     <div class="tools">
       <div class="tool-block" id="bgRemovalBlock">
         <h3><span class="n">00</span> Remove background</h3>
-        <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Adjust sliders below to your specification, then hit Apply.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:4px 0 12px;line-height:1.4;">Adjust sliders below to your specification, then hit Apply.</p>
         <div class="row" style="margin-bottom: 12px;">
           <div style="flex:1">
             <label>Extraction Engine</label>
@@ -471,26 +471,28 @@
         </div>
 
         <div id="aiModelControls" style="display:none;">
-          <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Runs neural segmentation locally.</p>
+          <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.4;">Runs neural segmentation locally.</p>
         </div>
 
         <div style="height:8px"></div>
         <button class="action ghost" id="holeRemoveToggle">Enable Hole Removal (click enclosed gaps)</button>
-        <p style="font-size:11px;color:#8a8578;margin:8px 0 0;line-height:1.4;">Click inside enclosed background pockets — e.g. inside letters like O, D, R — to clear trapped background the edge flood-fill can't reach.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:8px 0 0;line-height:1.4;">Click inside enclosed background pockets — e.g. inside letters like O, D, R — to clear trapped background the edge flood-fill can't reach.</p>
         <div style="height:8px"></div>
-        <button class="action" id="applyBgRemove" style="margin-bottom:6px;">Lock In Removal</button>
-        <button class="action ghost" id="resetBgRemove" data-original-text="Reset Background Extraction">Reset Background Extraction</button>
         <div class="history-controls">
           <button class="action ghost history-back-btn" id="bgHistoryBack" style="flex:1;" disabled>← Go Back</button>
           <button class="action ghost history-redo-btn" id="bgHistoryRedo" style="flex:1;" disabled>Redo →</button>
         </div>
+        <div style="height:8px"></div>
+        <button class="action ghost" id="resetBgRemove" data-original-text="Reset Background Extraction">Reset Background Extraction</button>
+        <div style="height:8px"></div>
+        <button class="action" id="applyBgRemove" style="margin-bottom:6px;">Remove background</button>
         <div class="progress-track" id="bgProgressTrack"><div class="progress-fill" id="bgProgressFill"></div></div>
-        <div id="bgStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a8578;margin-top:8px;min-height:14px;"></div>
+        <div id="bgStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#000;font-weight:500;margin-top:8px;min-height:14px;"></div>
       </div>
 
       <div class="tool-block">
         <h3><span class="n">01</span> Touch-up brush</h3>
-        <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.5;">Manual trace override brush.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.5;">Manual trace override brush.</p>
         <div class="row">
           <div style="flex:1">
             <label>brush action</label>
@@ -500,7 +502,7 @@
             </select>
           </div>
         </div>
-        <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a8578;">brush size — <span id="brushSizeVal">60</span>px</label>
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#000;font-weight:500;">brush size — <span id="brushSizeVal">60</span>px</label>
         <input type="range" id="brushSize" min="8" max="150" value="60">
         <div style="height:8px"></div>
         <button class="action ghost" id="brushToggle">Enable brush</button>
@@ -508,7 +510,7 @@
 
       <div class="tool-block" id="upscaleBlock">
         <h3><span class="n">02</span> Upscale & Smooth (HD)</h3>
-        <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Browser-side resampling with edge smoothing.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.4;">Browser-side resampling with edge smoothing.</p>
         <div class="row">
           <div style="flex:1">
             <label>Upscale Scale Factor</label>
@@ -544,12 +546,12 @@
           <div style="flex:1"><label id="labelW">width px</label><input type="number" id="w" value="4500"></div>
           <div style="flex:1"><label id="labelH">height px</label><input type="number" id="h" value="5400"></div>
         </div>
-        <label style="font-size:11px;color:#8a8578;">
+        <label style="font-size:11px;color:#000;font-weight:500;">
           <input type="checkbox" id="lockAspect" checked> Lock Aspect Ratio
         </label>
         <button class="action ghost" id="presetMerch">Merch 4500×5400</button>
         <div style="height:12px"></div>
-        <p style="font-size:11px;color:#8a8578;margin:0 0 8px;line-height:1.4;">If the crop cuts off part of the design, nudge it with these before applying — nothing is touched until you hit Apply.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 8px;line-height:1.4;">If the crop cuts off part of the design, nudge it with these before applying — nothing is touched until you hit Apply.</p>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
           <div style="flex:1">
             <label>Crop Tightness (frees up room to pan both ways, small upscale trade-off)</label>
@@ -585,9 +587,9 @@
 
       <div class="tool-block" id="halftoneBlock">
         <h3><span class="n">04</span> Targeted Halftone</h3>
-        <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Pick exactly which colours to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:4px 0 12px;line-height:1.4;">Pick exactly which colours to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
         <button class="action ghost" id="colorPickToggle" style="margin-bottom:10px;">Enable Colour Picker (click image to add swatch)</button>
-        <p style="font-size:11px;color:#8a8578;margin:0 0 10px;line-height:1.4;">Turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.4;">Turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch.</p>
         <div id="swatchList" style="font-family:'IBM Plex Mono',monospace;"></div>
         <div style="height:8px"></div>
         <button class="action" id="applyHalftone" style="margin-bottom: 6px;">Apply Targeted Halftone</button>
@@ -595,7 +597,7 @@
 
       <div class="tool-block">
         <h3><span class="n">05</span> Colour Adjust</h3>
-        <p style="font-size:11px;color:#8a8578;margin:4px 0 12px;line-height:1.4;">Compensate for the flattening halftoning causes. Adjust sliders below to your specification, then hit Apply.</p>
+        <p style="font-size:11px;color:#000;font-weight:500;margin:4px 0 12px;line-height:1.4;">Compensate for the flattening halftoning causes. Adjust sliders below to your specification, then hit Apply.</p>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
           <div style="flex:1">
             <label>Brightness</label>
@@ -714,9 +716,15 @@ function saveHistory() {
   // a fraction of the memory. The only cost is a small decode step on undo/redo itself.
   const w = canvas.width, h = canvas.height;
   const seedsSnapshot = holeSeeds.slice();
+  // Snapshot the sliders too, not just the pixels — otherwise Undo/Redo restores an old canvas
+  // while the sliders keep showing whatever you'd last dragged them to, since live-preview
+  // dragging never saves a history step of its own (only committed actions like Remove
+  // background, hole clicks, upscale etc. do). Without this the two get out of sync entirely.
+  const colorToleranceSnapshot = parseInt(colorTolerance.value) || 0;
+  const alphaThresholdSnapshot = parseInt(alphaThreshold.value) || 0;
   canvas.toBlob(blob => {
     if(!blob) return;
-    historyStack.push({ blob, width: w, height: h, holeSeeds: seedsSnapshot });
+    historyStack.push({ blob, width: w, height: h, holeSeeds: seedsSnapshot, colorTolerance: colorToleranceSnapshot, alphaThreshold: alphaThresholdSnapshot });
     if (historyStack.length > 30) historyStack.shift();
     redoStack = [];
     updateHistoryButtons();
@@ -737,6 +745,14 @@ async function restoreFromHistory(entry) {
   ctx.drawImage(bitmap, 0, 0);
   if (bitmap.close) bitmap.close();
   holeSeeds = (entry.holeSeeds || []).slice();
+  if (entry.colorTolerance !== undefined) {
+    colorTolerance.value = entry.colorTolerance;
+    toleranceVal.value = entry.colorTolerance;
+  }
+  if (entry.alphaThreshold !== undefined) {
+    alphaThreshold.value = entry.alphaThreshold;
+    alphaThreshVal.value = entry.alphaThreshold;
+  }
   renderZoomSize();
   syncHalftoneCache();
     syncColorAdjustCache();
@@ -1115,7 +1131,7 @@ let swatches = [];
 
 function renderSwatchList(){
   const list = document.getElementById('swatchList');
-  if(!swatches.length){ list.innerHTML = '<p style="font-size:11px;color:#8a8578;">No colours picked yet — enable the colour picker and click the image.</p>'; return; }
+  if(!swatches.length){ list.innerHTML = '<p style="font-size:11px;color:#000;font-weight:500;">No colours picked yet — enable the colour picker and click the image.</p>'; return; }
   list.innerHTML = swatches.map((s,i)=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid #c9c2b2;flex-wrap:wrap;">
       <div style="width:22px;height:22px;border:1px solid #1B1B18;background:rgb(${s.r},${s.g},${s.b});flex:0 0 auto;"></div>
@@ -1123,11 +1139,11 @@ function renderSwatchList(){
         <input type="checkbox" data-swatch-field="enabled" data-swatch-idx="${i}" ${s.enabled ? 'checked' : ''}> Halftone
       </label>
       <div style="flex:0 0 auto;display:flex;align-items:center;gap:6px;">
-        <label style="font-size:10px;color:#8a8578;">Hole Size</label>
+        <label style="font-size:10px;color:#000;font-weight:500;">Hole Size</label>
         <input type="number" data-swatch-field="dotPitch" data-swatch-idx="${i}" min="1" max="32" step="0.5" value="${s.dotPitch}" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 4px;border:1px solid #c9c2b2;">
       </div>
       <div style="flex:1 1 160px;display:flex;align-items:center;gap:6px;min-width:150px;">
-        <label style="font-size:10px;color:#8a8578;white-space:nowrap;">Tolerance</label>
+        <label style="font-size:10px;color:#000;font-weight:500;white-space:nowrap;">Tolerance</label>
         <input type="range" data-swatch-field="tolerance" data-swatch-idx="${i}" min="0" max="180" value="${s.tolerance}" style="flex:1;">
         <input type="number" data-swatch-field="tolerance" data-swatch-idx="${i}" min="0" max="180" value="${s.tolerance}" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 4px;border:1px solid #c9c2b2;">
       </div>
@@ -1333,7 +1349,7 @@ document.getElementById('resetBgRemove').addEventListener('click', (e) => {
     const processBtn = document.getElementById('applyBgRemove');
     processBtn.classList.remove('done-state', 'busy');
     processBtn.disabled = false;
-    processBtn.textContent = "Lock In Removal";
+    processBtn.textContent = "Remove background";
     document.getElementById('bgStatus').textContent = 'Layer reset to original asset parameters.';
     document.getElementById('applyBgRemove').disabled = false;
   }, true);

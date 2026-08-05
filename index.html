@@ -229,7 +229,10 @@
        start edge as before, so the existing anchor-to-cursor scroll math is unaffected. */
     display: flex;
     align-items: flex-start;
+    scrollbar-width: none;
+    user-select: none;
   }
+  .preview-holder::-webkit-scrollbar { display: none; }
 
   /* Shows what a pending resize crop will keep vs. cut — box-shadow spread darkens everywhere
      outside its own box, and .preview-holder's overflow:auto clips that spread at the edges, so

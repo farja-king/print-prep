@@ -258,6 +258,8 @@
   }
 
   canvas.brush-active{cursor:crosshair;}
+  canvas.pan-active{cursor:grab;}
+  canvas.pan-active:active{cursor:grabbing;}
   .tools{display:flex; flex-direction:column; gap:14px;}
   .tool-block{
     background:var(--white);
@@ -967,6 +969,54 @@ canvasPanel.addEventListener('wheel', e => {
   const factor = e.deltaY < 0 ? 1.12 : 1/1.12;
   applyZoom(zoomPct * factor, e.clientX, e.clientY);
 }, { passive:false });
+
+let spacePressed = false;
+let panStartX = 0;
+let panStartY = 0;
+let panStartScrollLeft = 0;
+let panStartScrollTop = 0;
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !spacePressed) {
+    spacePressed = true;
+    canvas.classList.add('pan-active');
+    previewHolder.style.cursor = 'grab';
+  }
+});
+
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space') {
+    spacePressed = false;
+    canvas.classList.remove('pan-active');
+    previewHolder.style.cursor = '';
+  }
+});
+
+previewHolder.addEventListener('mousedown', e => {
+  if (!spacePressed) return;
+  e.preventDefault();
+  panStartX = e.clientX;
+  panStartY = e.clientY;
+  panStartScrollLeft = previewHolder.scrollLeft;
+  panStartScrollTop = previewHolder.scrollTop;
+  previewHolder.style.cursor = 'grabbing';
+});
+
+previewHolder.addEventListener('mousemove', e => {
+  if (!spacePressed || (panStartX === 0 && panStartY === 0)) return;
+  const deltaX = e.clientX - panStartX;
+  const deltaY = e.clientY - panStartY;
+  previewHolder.scrollLeft = panStartScrollLeft - deltaX;
+  previewHolder.scrollTop = panStartScrollTop - deltaY;
+});
+
+document.addEventListener('mouseup', e => {
+  panStartX = 0;
+  panStartY = 0;
+  if (spacePressed) {
+    previewHolder.style.cursor = 'grab';
+  }
+});
 
 function setGarmentBackground(color){
   canvas.style.backgroundImage = '';

@@ -978,6 +978,7 @@ let panStartScrollTop = 0;
 
 document.addEventListener('keydown', e => {
   if (e.code === 'Space' && !spacePressed) {
+    e.preventDefault();
     spacePressed = true;
     canvas.classList.add('pan-active');
     previewHolder.style.cursor = 'grab';
@@ -986,6 +987,7 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('keyup', e => {
   if (e.code === 'Space') {
+    e.preventDefault();
     spacePressed = false;
     canvas.classList.remove('pan-active');
     previewHolder.style.cursor = '';

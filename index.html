@@ -997,20 +997,22 @@ document.addEventListener('keyup', e => {
 previewHolder.addEventListener('mousedown', e => {
   if (!spacePressed) return;
   e.preventDefault();
+  e.stopPropagation();
   panStartX = e.clientX;
   panStartY = e.clientY;
   panStartScrollLeft = previewHolder.scrollLeft;
   panStartScrollTop = previewHolder.scrollTop;
   previewHolder.style.cursor = 'grabbing';
-});
+}, { passive: false });
 
-previewHolder.addEventListener('mousemove', e => {
+document.addEventListener('mousemove', e => {
   if (!spacePressed || (panStartX === 0 && panStartY === 0)) return;
+  e.preventDefault();
   const deltaX = e.clientX - panStartX;
   const deltaY = e.clientY - panStartY;
   previewHolder.scrollLeft = panStartScrollLeft - deltaX;
   previewHolder.scrollTop = panStartScrollTop - deltaY;
-});
+}, { passive: false });
 
 document.addEventListener('mouseup', e => {
   panStartX = 0;

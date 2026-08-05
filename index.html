@@ -974,54 +974,69 @@ canvasPanel.addEventListener('wheel', e => {
 }, { passive:false });
 
 let spacePressed = false;
+let isPanning = false;
 let panStartX = 0;
 let panStartY = 0;
 let panStartScrollLeft = 0;
 let panStartScrollTop = 0;
 
+function isTypingTarget(el){
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+}
+
+// Capture phase + preventDefault on EVERY space keydown (not just the first): holding a key
+// fires repeated keydown "auto-repeat" events, and the old code only guarded/prevented the
+// first one (via !spacePressed). Every repeat after that skipped preventDefault entirely,
+// letting the browser's native "space = scroll page down" fire on each repeat for as long as
+// space stayed held — that's what made the whole page/preview jump while dragging.
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && !spacePressed) {
-    e.preventDefault();
-    spacePressed = true;
-    canvas.classList.add('pan-active');
-    previewHolder.style.cursor = 'grab';
-  }
-});
+  if (e.code !== 'Space' || isTypingTarget(e.target)) return;
+  e.preventDefault();
+  if (spacePressed) return;
+  spacePressed = true;
+  canvas.classList.add('pan-active');
+  previewHolder.style.cursor = 'grab';
+}, true);
 
 document.addEventListener('keyup', e => {
-  if (e.code === 'Space') {
-    e.preventDefault();
-    spacePressed = false;
-    canvas.classList.remove('pan-active');
-    previewHolder.style.cursor = '';
-  }
+  if (e.code !== 'Space') return;
+  spacePressed = false;
+  isPanning = false;
+  canvas.classList.remove('pan-active');
+  previewHolder.style.cursor = '';
+});
+
+// Also released on window blur (alt-tab, devtools stealing focus mid-drag, etc.) — otherwise
+// a keyup that never arrives leaves spacePressed stuck true forever.
+window.addEventListener('blur', () => {
+  spacePressed = false;
+  isPanning = false;
+  canvas.classList.remove('pan-active');
+  previewHolder.style.cursor = '';
 });
 
 previewHolder.addEventListener('mousedown', e => {
   if (!spacePressed) return;
   e.preventDefault();
-  e.stopPropagation();
+  isPanning = true;
   panStartX = e.clientX;
   panStartY = e.clientY;
   panStartScrollLeft = previewHolder.scrollLeft;
   panStartScrollTop = previewHolder.scrollTop;
   previewHolder.style.cursor = 'grabbing';
-}, { passive: false });
+});
 
 document.addEventListener('mousemove', e => {
-  if (!spacePressed || (panStartX === 0 && panStartY === 0)) return;
+  if (!isPanning) return;
   e.preventDefault();
-  const deltaX = e.clientX - panStartX;
-  const deltaY = e.clientY - panStartY;
-  previewHolder.scrollLeft = panStartScrollLeft - deltaX;
-  previewHolder.scrollTop = panStartScrollTop - deltaY;
+  previewHolder.scrollLeft = panStartScrollLeft - (e.clientX - panStartX);
+  previewHolder.scrollTop = panStartScrollTop - (e.clientY - panStartY);
 }, { passive: false });
 
-document.addEventListener('mouseup', e => {
-  panStartX = 0;
-  panStartY = 0;
-  if (spacePressed) {
-    previewHolder.style.cursor = 'grab';
+document.addEventListener('mouseup', () => {
+  if (isPanning) {
+    isPanning = false;
+    previewHolder.style.cursor = spacePressed ? 'grab' : '';
   }
 });
 

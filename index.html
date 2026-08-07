@@ -1185,6 +1185,19 @@ function applyColorKeyLive() {
     const alphaCut = parseInt(alphaThreshold.value);
     computeColorKeyRemoval(imgData.data, w, h, tolerance, alphaCut);
     ctx.putImageData(imgData, 0, 0);
+    // Keep pristineSourceCanvas (what the Touch-up brush's Restore mode paints from) in lockstep
+    // with every live slider tweak here, not just an explicit "Apply" click. Restore was pulling
+    // from whatever pristineSourceCanvas last held — if a user dragged these sliders (which fully
+    // recomputes the canvas from preRemovalCanvas and already looks background-removed on screen)
+    // and went straight to the brush without clicking Apply, pristineSourceCanvas was still the
+    // ORIGINAL full-background snapshot from image load, so Restore brought the whole background
+    // back on any stroke, not just genuinely-erased spots. Safe to overwrite here unconditionally:
+    // this recompute already wipes any brush edits from the canvas itself (it rebuilds entirely
+    // from preRemovalCanvas), so there's nothing brush-related left in pristineSourceCanvas to lose.
+    pristineSourceCanvas = document.createElement('canvas');
+    pristineSourceCanvas.width = w;
+    pristineSourceCanvas.height = h;
+    pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
     updateMeta();
   }, 120);
 }

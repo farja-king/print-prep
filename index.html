@@ -2230,9 +2230,12 @@ function paintLine(from, to){
   }
 }
 
-canvas.addEventListener('mousedown', (e)=>{ 
-  if(!brushOn) return; 
-  painting = true; 
+canvas.addEventListener('mousedown', (e)=>{
+  // Space-bar pan must win over the brush regardless of brushOn — without this check, a stroke
+  // started unconditionally on every mousedown whenever the brush was enabled, so holding space
+  // and dragging painted instead of panning if the brush had been left on. Same fix as Vector Prep.
+  if(!brushOn || spacePressed) return;
+  painting = true;
   lastPos = {x:(e.offsetX/canvas.clientWidth)*canvas.width, y:(e.offsetY/canvas.clientHeight)*canvas.height}; 
   paintLine(lastPos, lastPos); 
 });

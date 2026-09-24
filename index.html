@@ -615,6 +615,13 @@ html.gs-busy, html.gs-busy *{cursor:progress !important;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4m0 0L8 8m4-4 4 4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
         <span>Export</span>
       </button>
+      <!-- Pinned to the bottom of the rail via margin-top:auto (same spot Graphical Magic uses in
+           its own sidebar) — the store isn't live yet, so this is a placeholder that just tells you
+           so, ready to swap for the real link the moment it exists. -->
+      <button type="button" class="rail-btn" id="buyFullSuiteBtn" title="Buy the full suite" style="margin-top:auto;background:var(--thread-red);border-color:var(--thread-red);color:#fff;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12L6 6Z"/><path d="M6 6 5 3H2"/><circle cx="9.5" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/></svg>
+        <span>Buy</span>
+      </button>
     </nav>
     <div class="canvas-container">
       <div class="canvas-panel">
@@ -1776,12 +1783,22 @@ function refreshPristineFromCanvas() {
 }
 document.getElementById('applyColorAdjust').addEventListener('click', (e) => {
   if (!requireDesktopApp('Colour adjustment')) return;
-  runBusy(e.target, () => {
+  const applyColorAdjustBtn = e.target;
+  runBusy(applyColorAdjustBtn, () => {
     syncColorAdjustLiveBaseline();
     refreshPristineFromCanvas();
     syncHalftoneCache();
     saveHistory();
     updateMeta();
+  }, false, () => {
+    // Same class of bug as Trim to Content/Resize/Colour Remover (see Trim to Content's own fix
+    // comment) — runBusy's default completion permanently marks this "✓ Done" in green, but Apply
+    // here is explicitly designed to be clicked again for further tweaks on top of an
+    // already-applied adjustment (see syncColorAdjustLiveBaseline's own comment above) — the
+    // opposite of a one-shot milestone, so a permanent tick was actively misleading.
+    applyColorAdjustBtn.disabled = false;
+    applyColorAdjustBtn.classList.remove('busy');
+    applyColorAdjustBtn.textContent = applyColorAdjustBtn.dataset.originalText || 'Apply Colour Adjustment';
   });
 });
 document.getElementById('resetColorAdjust').addEventListener('click', (e) => {
@@ -2172,6 +2189,18 @@ document.getElementById('applyResize').addEventListener('click', (e)=>{
     saveHistory();
     updateMeta();
     hideCropPreview();
+  }, false, () => {
+    // Same class of bug as Trim to Content (see that button's own fix comment for the full
+    // explanation): runBusy's default completion permanently marks this button "✓ Done" in green,
+    // but Resize isn't a tracked one-shot milestone (not in DONE_IDS, no re-run confirmation, no
+    // undo-aware tracking) — it just inherited the tick as a side effect of going through runBusy.
+    // Resizing again after a later edit is completely normal (e.g. resize, touch-up, decide the
+    // dimensions still aren't quite right), so a permanent tick here is just as misleading here as
+    // it was on Trim to Content.
+    const applyResizeBtn = document.getElementById('applyResize');
+    applyResizeBtn.disabled = false;
+    applyResizeBtn.classList.remove('busy');
+    applyResizeBtn.textContent = applyResizeBtn.dataset.originalText || 'Apply resize';
   });
 });
 
@@ -2671,7 +2700,15 @@ removerApplyBtn.addEventListener('click', () => {
     saveHistory();
     updateMeta();
     removerStatus.textContent = removedCount > 0 ? `Removed ${removedCount.toLocaleString()} matching pixels.` : 'No matching pixels found within that tolerance.';
-  }, false);
+  }, false, () => {
+    // Same class of bug as Trim to Content/Resize (see Trim to Content's own fix comment) —
+    // runBusy's default completion permanently marks this "✓ Done" in green, but removing a
+    // colour again (a different target colour, or after later edits change what's on the canvas)
+    // is completely normal here, not a one-shot milestone worth locking in.
+    removerApplyBtn.disabled = false;
+    removerApplyBtn.classList.remove('busy');
+    removerApplyBtn.textContent = removerApplyBtn.dataset.originalText || 'Remove Matching Colour';
+  });
 });
 
 document.getElementById('removerUndo').addEventListener('click', undo);
@@ -3178,6 +3215,43 @@ function crc32(bytes){
   }
   window.__openFirstPanelByDefault = openFirstPanelByDefault;
 })();
+
+// Placeholder for the real store link, which doesn't exist yet — swap the alert below for a real
+// navigate/checkout link the moment there's somewhere for it to go. Keeping the button live now
+// (rather than leaving it out entirely) means it's already in place, tested and positioned
+// correctly for that day, instead of being a separate piece of work later.
+document.getElementById('buyFullSuiteBtn').addEventListener('click', () => {
+  alert("The Graphical Magic store is still being built and isn't live yet — check back soon to buy the full desktop suite and unlock Upscale, Resize and Colour Adjustment, plus everything else in the desktop app.");
+});
+
+// "Next Step" — a semi-guided walk down the rail's own tool order. The tools were already meant to
+// be used top-to-bottom, but the only feedback any of them gave was a "✓ Done" tick that (see every
+// fix comment above this one) routinely went stale the moment a later step changed the picture —
+// so it never actually told you whether to move on. This sidesteps that entirely: it's pure
+// navigation, not a claim about whether a step is "finished", and it works identically whether or
+// not you touched anything in the panel it's leaving. Reuses the exact same rail-btn click the
+// sidebar icons already use (open next, close current, re-center it) rather than duplicating that
+// logic, so behaviour can never drift between the two ways of moving between panels.
+// Trying this on printprep.click first — if it works, worth carrying the same pattern into Vector
+// Prep and the desktop apps too.
+const NEXT_STEP_SEQUENCE = ['bgRemovalBlock', 'colourRemoverBlock', 'cropBlock', 'panel-touchup', 'upscaleBlock', 'resizeBlock', 'halftoneBlock', 'panel-colour-adjust', 'panel-export'];
+NEXT_STEP_SEQUENCE.slice(0, -1).forEach((panelId, i) => {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const nextId = NEXT_STEP_SEQUENCE[i + 1];
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'margin-top:14px;padding-top:12px;border-top:1px solid var(--field-border);';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'action';
+  btn.textContent = 'Next Step →';
+  btn.addEventListener('click', () => {
+    const nextBtn = document.querySelector(`.rail-btn[data-panel="${nextId}"]`);
+    if (nextBtn) nextBtn.click();
+  });
+  wrap.appendChild(btn);
+  panel.appendChild(wrap);
+});
 
 // loadFile's stage.classList.add('on') happens inside img.onload, which fires
 // asynchronously after img.src is set — calling openFirstPanelByDefault

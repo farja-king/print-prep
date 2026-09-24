@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Print Prep — DTF Background Removal &amp; Halftone Tool | Crystal Groupz</title>
-<meta name="description" content="Free browser-based DTF print prep tool: background removal, targeted halftoning, upscaling and resize-to-spec artwork preparation. Built for print shops, embroiderers and hobbyists preparing print-ready artwork for DTF and garment decoration.">
-<meta name="keywords" content="DTF print prep, DTF background removal, halftone for DTF, DTF upscaling, print shop tool, embroidery digitizing prep, garment printing software, print-ready artwork tool">
+<meta name="description" content="Free browser-based DTF print prep tool: background removal, targeted halftoning, upscaling and resize-to-spec artwork preparation. Built for print shops and hobbyists preparing print-ready artwork for DTF and garment decoration.">
+<meta name="keywords" content="DTF print prep, DTF background removal, halftone for DTF, DTF upscaling, print shop tool, garment printing software, print-ready artwork tool">
 <meta name="author" content="Crystal Groupz">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://printprep.click/">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Print Prep — DTF Background Removal & Halftone Tool">
-<meta property="og:description" content="Free browser-based DTF print prep tool: background removal, targeted halftoning, upscaling and resize-to-spec. Built for print shops, embroiderers and hobbyists.">
+<meta property="og:description" content="Free browser-based DTF print prep tool: background removal, targeted halftoning, upscaling and resize-to-spec. Built for print shops and hobbyists.">
 <meta property="og:url" content="https://printprep.click/">
 <meta property="og:site_name" content="Print Prep by Crystal Groupz">
 
@@ -29,7 +29,7 @@
   "applicationCategory": "DesignApplication",
   "operatingSystem": "Any (runs in web browser)",
   "url": "https://printprep.click/",
-  "description": "Browser-based DTF print prep tool for background removal, targeted halftoning, upscaling and resize-to-spec artwork preparation. Built for print shops, embroiderers and hobbyists.",
+  "description": "Browser-based DTF print prep tool for background removal, targeted halftoning, upscaling and resize-to-spec artwork preparation. Built for print shops and hobbyists.",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -43,23 +43,31 @@
 }
 </script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
   :root{
-    --canvas:#EDE8DF;
-    --ink:#1B1B18;
+    /* Dark theme, matching Vector Prep's exact palette — see that file's :root
+       for the full rationale. --ink plays a light/foreground role here too. */
+    --canvas:#1a1c22;
+    --ink:#e7e9ee;
     --thread-red:#B23A26;
     --thread-blue:#2F4858;
     --stitch-gold:#B8935F;
-    --paper-line:#D8D0C0;
-    --white:#FBFAF6;
+    --paper-line:#262a33;
+    --white:#23262e;
+    --field-border:#3a3f4a;
   }
 
   *{box-sizing:border-box;}
+  html{height:100%;}
   body{
+    height:100%;
     margin:0;
+    /* No page scrolling once a design is loaded — see .wrap:has(.stage.on)
+       below, which shrinks the intro/drop-zone and caps the preview to fit
+       whatever's left of the viewport instead. Matches Vector Prep. */
+    overflow:hidden;
     background:var(--canvas);
-    font-family:'IBM Plex Sans',sans-serif;
+    font-family:'Segoe UI',sans-serif;
     color:var(--ink);
     background-image:
       radial-gradient(var(--paper-line) 1px, transparent 1px);
@@ -67,6 +75,12 @@
   }
 
   .wrap{max-width:960px;margin:0 auto;padding:36px 20px 60px;}
+
+  .wrap:has(.stage.on){padding-top:14px; padding-bottom:14px;}
+  .wrap:has(.stage.on) .sub{display:none;}
+  .wrap:has(.stage.on) .drop{padding:16px 20px; margin-bottom:10px;}
+  .wrap:has(.stage.on) .footnote{display:none;}
+  .wrap:has(.stage.on) .start-over-btn{margin-top:8px;}
 
   header{
     display:flex;
@@ -77,7 +91,7 @@
     margin-bottom:8px;
   }
   h1{
-    font-family:'Oswald',sans-serif;
+    font-family:'Bahnschrift',sans-serif;
     font-weight:700;
     text-transform:uppercase;
     letter-spacing:0.02em;
@@ -86,14 +100,14 @@
   }
   h1 span{color:var(--thread-red);}
   .tag{
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size:12px;
     color:var(--thread-blue);
     text-transform:uppercase;
     letter-spacing:0.08em;
   }
   .version-tag{
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size:11px;
     color:var(--thread-blue);
     letter-spacing:0.05em;
@@ -101,7 +115,7 @@
   }
   .sub{
     font-size:14px;
-    color:#5c5a52;
+    color:#9aa0ac;
     margin:10px 0 28px;
     max-width:520px;
     line-height:1.5;
@@ -116,14 +130,105 @@
     cursor:pointer;
     transition:border-color .15s, background .15s;
   }
-  .drop.drag{border-color:var(--thread-red); background:#fff;}
+  .drop.drag{border-color:var(--thread-red); background:var(--white);}
   .drop p{margin:0; font-size:15px;}
-  .drop .hint{font-family:'IBM Plex Mono',monospace; font-size:11px; color:#000;font-weight:500; margin-top:8px;}
+  .drop .hint{font-family:'Consolas',monospace; font-size:11px; color:var(--ink);font-weight:500; margin-top:8px;}
   input[type=file]{display:none;}
 
   .stage{display:none; margin-top:28px;}
-  .stage.on{display:grid; grid-template-columns:1fr 280px; gap:24px; align-items:start;}
-  @media (max-width:680px){.stage.on{grid-template-columns:1fr;}}
+  /* Same traditional-graphics-app layout as Vector Prep: a slim icon rail
+     pinned to the left, the canvas filling the rest of the window (full
+     bleed, breaking out of .wrap's max-width), and each tool's controls
+     living in a panel docked to the right edge — not squeezed into a
+     narrow sidebar column. See Vector Prep's identical rule for the full
+     rationale. */
+  .stage.on{
+    display:block;
+    position:relative;
+    width:100vw;
+    left:50%;
+    margin-left:-50vw;
+    padding:0 24px 0 80px;
+    box-sizing:border-box;
+  }
+
+  .tool-rail{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    position:fixed;
+    top:0;
+    left:0;
+    height:100vh;
+    width:56px;
+    padding-top:16px;
+    background:var(--canvas);
+    border-right:1px solid var(--field-border);
+    z-index:30;
+    overflow-y:auto;
+  }
+  .rail-btn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    width:56px;
+    padding:8px 2px;
+    background:var(--white);
+    border:1px solid var(--field-border);
+    color:var(--ink);
+    cursor:pointer;
+    font-family:'Consolas',monospace;
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .rail-btn svg{width:20px; height:20px;}
+  .rail-btn:hover{border-color:var(--thread-red);}
+  .rail-btn.active{background:var(--thread-red); border-color:var(--thread-red); color:#fff;}
+
+  .tool-popout{
+    display:none;
+    position:fixed;
+    top:24px;
+    right:24px;
+    width:300px;
+    min-width:220px;
+    min-height:120px;
+    max-height:calc(100vh - 48px);
+    overflow-y:auto;
+    z-index:20;
+    box-shadow:0 8px 28px rgba(0,0,0,0.5);
+  }
+  .tool-popout.open{display:block;}
+  .popout-resize-handle{
+    position:absolute;
+    right:1px;
+    bottom:1px;
+    width:15px;
+    height:15px;
+    cursor:nwse-resize;
+    color:var(--field-border);
+    z-index:1;
+  }
+  .popout-resize-handle:hover{color:var(--thread-red);}
+  .popout-resize-handle svg{width:100%; height:100%; display:block;}
+
+  body.panel-open .canvas-panel .label{padding-right:320px;}
+  .tool-popout h3{position:relative; padding-right:22px; cursor:move; user-select:none;}
+  .popout-close{
+    position:absolute;
+    top:0;
+    right:0;
+    background:transparent;
+    border:none;
+    color:var(--ink);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    padding:0 2px;
+  }
+  .popout-close:hover{color:var(--thread-red);}
 
   .canvas-container {
     position: sticky;
@@ -141,11 +246,11 @@
     position:relative;
   }
   .canvas-panel .label{
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size:11px;
     text-transform:uppercase;
     letter-spacing:.06em;
-    color:#000;font-weight:500;
+    color:var(--ink);font-weight:500;
     margin-bottom:10px;
     display:flex; 
     justify-content:space-between; 
@@ -163,7 +268,7 @@
     display:block;
     width:100%;
     margin-top:14px;
-    font-family:'IBM Plex Sans',sans-serif;
+    font-family:'Segoe UI',sans-serif;
     font-weight:700;
     font-size:14px;
     text-transform:uppercase;
@@ -177,11 +282,11 @@
   .start-over-btn:hover{background:#B71C1C;}
   .start-over-btn:active{transform:translateY(1px);}
   .garment-preview .label-inline {
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: .06em;
-    color:#000;font-weight:500;
+    color:var(--ink);font-weight:500;
   }
   .swatch-row { display:flex; gap:6px; flex-wrap:wrap; }
   .swatch-btn {
@@ -248,6 +353,21 @@
   }
   #cropOverlay.show{display:block;}
 
+  /* The manual marquee-crop box (Crop panel) — same darken-outside look as #cropOverlay above
+     (Resize's own "what will be kept" preview), but its own element/id so the two never fight
+     over the same box while a person has both panels' state sitting around. Positioned in JS
+     from canvas.offsetLeft/offsetTop + the drag rectangle, in canvas pixel space scaled to the
+     canvas's current on-screen size — same approach updateCropOverlay already uses. */
+  #cropMarqueeOverlay{
+    position:absolute;
+    top:0; left:0; width:0; height:0;
+    box-shadow:0 0 0 9999px rgba(0,0,0,0.55);
+    border:2px dashed #fff;
+    pointer-events:none;
+    display:none;
+  }
+  #cropMarqueeOverlay.show{display:block;}
+
   canvas{
     max-width: 100%;
     display:block;
@@ -270,7 +390,7 @@
     padding:14px;
   }
   .tool-block h3{
-    font-family:'Oswald',sans-serif;
+    font-family:'Bahnschrift',sans-serif;
     font-size:14px;
     text-transform:uppercase;
     letter-spacing:.04em;
@@ -280,13 +400,13 @@
     gap:8px;
   }
   .tool-block h3 .n{
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size:11px;
     color:var(--thread-red);
   }
   button.action{
     width:100%;
-    font-family:'IBM Plex Sans',sans-serif;
+    font-family:'Segoe UI',sans-serif;
     font-weight:600;
     font-size:13px;
     padding:9px 10px;
@@ -318,7 +438,7 @@
   }
   .progress-track{
     height:5px;
-    background:#e4ded0;
+    background:var(--paper-line);
     border:1px solid var(--ink);
     margin-top:8px;
     overflow:hidden;
@@ -353,19 +473,24 @@
   .row{display:flex; gap:8px; margin-bottom:8px;}
   .row input[type=number]{
     width:100%;
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size:12px;
     padding:6px 8px;
-    border:1px solid #c9c2b2;
+    border:1px solid var(--field-border);
   }
-  .row label{font-size:11px; color:#000;font-weight:500; display:block; margin-bottom:3px; font-family:'IBM Plex Mono',monospace;}
+  .row label{font-size:11px; color:var(--ink);font-weight:500; display:block; margin-bottom:3px; font-family:'Consolas',monospace;}
 
   input[type=range]{width:100%; accent-color:var(--thread-red);}
+  /* Every <select> here sets its own background/border inline but never its own text color —
+     the browser default (black) is invisible-ish against the dark theme's panel background.
+     One global rule fixes every instance at once, same as Vector Prep's own bare `select{}`. */
+  select{color:var(--ink);}
+  input[type=number], input[type=text]{color:var(--ink); background:transparent;}
 
   .meta{
-    font-family:'IBM Plex Mono',monospace;
+    font-family:'Consolas',monospace;
     font-size:11px;
-    color:#000;font-weight:500;
+    color:var(--ink);font-weight:500;
     margin-top:6px;
     display:flex;
     justify-content:space-between;
@@ -375,7 +500,7 @@
   .footnote{
     margin-top:34px;
     font-size:12px;
-    color:#000;font-weight:500;
+    color:var(--ink);font-weight:500;
     border-top:1px solid var(--paper-line);
     padding-top:14px;
     line-height:1.6;
@@ -395,6 +520,15 @@
     <path d="M470 400 L730 400 M600 270 L600 530" stroke="#2F4858" stroke-width="10"/>
   </svg>
 </template>
+<style id="gs-busy-style">
+/* Busy indicator (shared across Graphic Suite tools): a spinner pill + progress cursor so a long
+   operation never looks like a crash. */
+#gsBusy{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2147483000;display:none;align-items:center;gap:10px;padding:8px 18px 8px 12px;background:#23262e;color:#e7e9ee;border:1px solid #3a3f4a;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.45);font:600 13px system-ui,"Segoe UI",sans-serif;pointer-events:none;}
+#gsBusy.show{display:flex;}
+#gsBusy .gs-spin{width:16px;height:16px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:gsSpin .8s linear infinite;}
+@keyframes gsSpin{to{transform:rotate(360deg);}}
+html.gs-busy, html.gs-busy *{cursor:progress !important;}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -402,7 +536,7 @@
   <header>
     <div>
       <h1>Print<span>Prep</span></h1>
-      <div class="version-tag">Version 3.5</div>
+      <div class="version-tag">Version 3.6</div>
     </div>
     <div class="tag">Production Suite • DTF/Print Ready</div>
   </header>
@@ -424,19 +558,58 @@
   </div>
 
   <div class="stage" id="stage">
+    <nav class="tool-rail" id="toolRail">
+      <button type="button" class="rail-btn" data-panel="bgRemovalBlock" title="Remove background">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 14 7l4 4-10 10H4v-4Z"/><path d="M13.5 7.5 16.5 10.5"/></svg>
+        <span>Background</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="colourRemoverBlock" title="Colour Remover">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 10.5A6 6 0 0 1 6 13.5C6 9.5 12 3 12 3Z"/></svg>
+        <span>Colour Rm</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="cropBlock" title="Crop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14"/></svg>
+        <span>Crop</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="panel-touchup" title="Touch-up brush">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c1-4 2-6 4-6s2 2 3 2 2-8 5-11 5 2 2 5-9 4-9 5 2 2 2 3-3 3-7 2Z"/></svg>
+        <span>Touch-up</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="upscaleBlock" title="Upscale &amp; Smooth">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H3v6M15 3h6v6M3 15v6h6M21 15v6h-6"/></svg>
+        <span>Upscale</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="resizeBlock" title="Resize to spec">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M14 20l6-6"/></svg>
+        <span>Resize</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="halftoneBlock" title="Targeted Halftone">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="6" cy="6" r="1.6"/><circle cx="12" cy="6" r="1.6"/><circle cx="18" cy="6" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/><circle cx="6" cy="18" r="1.6"/><circle cx="12" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg>
+        <span>Halftone</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="panel-colour-adjust" title="Colour Adjust">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="14" cy="7" r="2.3"/><circle cx="8" cy="17" r="2.3"/></svg>
+        <span>Colour Adj</span>
+      </button>
+      <button type="button" class="rail-btn" data-panel="panel-export" title="Export">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4m0 0L8 8m4-4 4 4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
+        <span>Export</span>
+      </button>
+    </nav>
     <div class="canvas-container">
       <div class="canvas-panel">
         <div class="label">
           <span>Production View Setup</span>
-          <div style="display:flex; gap:8px; align-items:center; font-family:'IBM Plex Sans',sans-serif; text-transform:none; letter-spacing:normal;">
-             <label style="font-size:11px; color:#000;font-weight:500; margin:0;">Zoom (scroll to zoom on cursor):</label>
+          <div style="display:flex; gap:8px; align-items:center; font-family:'Segoe UI',sans-serif; text-transform:none; letter-spacing:normal;">
+             <label style="font-size:11px; color:var(--ink);font-weight:500; margin:0;">Zoom (scroll to zoom on cursor):</label>
              <input type="range" id="zoomLevel" min="1" max="500" value="100" style="width:80px; margin:0;">
-             <span id="zoomVal" style="font-size:11px; font-family:'IBM Plex Mono',monospace; font-weight:bold; width:35px; text-align:right;">100%</span>
+             <span id="zoomVal" style="font-size:11px; font-family:'Consolas',monospace; font-weight:bold; width:35px; text-align:right;">100%</span>
           </div>
         </div>
-        <div class="preview-holder">
+        <div class="preview-holder" id="previewHolder">
            <canvas id="canvas"></canvas>
            <div id="cropOverlay"></div>
+           <div id="cropMarqueeOverlay"></div>
         </div>
         <div class="garment-preview">
           <span class="label-inline">Garment Preview</span>
@@ -459,13 +632,13 @@
     </div>
 
     <div class="tools">
-      <div class="tool-block" id="bgRemovalBlock">
-        <h3><span class="n">00</span> Remove background</h3>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:4px 0 12px;line-height:1.4;">Adjust sliders below to your specification, then hit Apply.</p>
+      <div class="tool-block tool-popout" id="bgRemovalBlock">
+        <h3><span class="n">00</span> Remove background<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:4px 0 12px;line-height:1.4;">Adjust sliders below to your specification, then hit Apply.</p>
         <div class="row" style="margin-bottom: 12px;">
           <div style="flex:1">
             <label>Extraction Engine</label>
-            <select id="bgMethod" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 8px;border:1px solid #c9c2b2;background:#fff;">
+            <select id="bgMethod" style="width:100%;font-family:'Consolas',monospace;font-size:12px;padding:6px 8px;border:1px solid var(--field-border);background:var(--white);">
               <option value="color">Smart Vector Outer (Logos/Graphics)</option>
               <option value="ai">AI Model Framework (Photos)</option>
             </select>
@@ -479,7 +652,7 @@
               <input type="range" id="colorTolerance" min="0" max="120" value="0">
             </div>
             <div style="width:60px; text-align:right; margin-top:8px;">
-              <input type="number" id="toleranceVal" min="0" max="120" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+              <input type="number" id="toleranceVal" min="0" max="120" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
             </div>
           </div>
           
@@ -489,18 +662,18 @@
               <input type="range" id="alphaThreshold" min="0" max="254" value="0">
             </div>
             <div style="width:60px; text-align:right; margin-top:8px;">
-              <input type="number" id="alphaThreshVal" min="0" max="254" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+              <input type="number" id="alphaThreshVal" min="0" max="254" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
             </div>
           </div>
         </div>
 
         <div id="aiModelControls" style="display:none;">
-          <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.4;">Runs neural segmentation locally.</p>
+          <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 10px;line-height:1.4;">Runs neural segmentation locally.</p>
         </div>
 
         <div style="height:8px"></div>
         <button class="action ghost" id="holeRemoveToggle">Enable Hole Removal (click enclosed gaps)</button>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:8px 0 0;line-height:1.4;">Click inside enclosed background pockets — e.g. inside letters like O, D, R — to clear trapped background the edge flood-fill can't reach.</p>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:8px 0 0;line-height:1.4;">Click inside enclosed background pockets — e.g. inside letters like O, D, R — to clear trapped background the edge flood-fill can't reach.</p>
         <div style="height:8px"></div>
         <div class="history-controls">
           <button class="action ghost history-back-btn" id="bgHistoryBack" style="flex:1;" disabled>← Go Back</button>
@@ -511,16 +684,16 @@
         <div style="height:8px"></div>
         <button class="action" id="applyBgRemove" style="margin-bottom:6px;">Remove background</button>
         <div class="progress-track" id="bgProgressTrack"><div class="progress-fill" id="bgProgressFill"></div></div>
-        <div id="bgStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#000;font-weight:500;margin-top:8px;min-height:14px;"></div>
+        <div id="bgStatus" style="font-family:'Consolas',monospace;font-size:11px;color:var(--ink);font-weight:500;margin-top:8px;min-height:14px;"></div>
       </div>
 
-      <div class="tool-block" id="colourRemoverBlock">
-        <h3><span class="n">01</span> Colour Remover</h3>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.5;">Pick a colour (or sample it straight off the image) and strip out every matching pixel across the whole canvas — not just a connected region, unlike Remove Background above — useful for wiping out a specific ink colour (e.g. all black linework) wherever it appears.</p>
+      <div class="tool-block tool-popout" id="colourRemoverBlock">
+        <h3><span class="n">01</span> Colour Remover<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 10px;line-height:1.5;">Pick a colour (or sample it straight off the image) and strip out every matching pixel across the whole canvas — not just a connected region, unlike Remove Background above — useful for wiping out a specific ink colour (e.g. all black linework) wherever it appears.</p>
         <div class="row" style="margin-bottom:10px;">
           <div style="flex:1">
             <label>Target colour</label>
-            <input type="color" id="removerColor" value="#000000" style="width:100%;height:32px;padding:0;border:1px solid #c9c2b2;cursor:pointer;">
+            <input type="color" id="removerColor" value="#000000" style="width:100%;height:32px;padding:0;border:1px solid var(--field-border);cursor:pointer;">
           </div>
         </div>
         <button class="action ghost" id="removerEyedropper" style="margin-bottom:12px;">Pick Colour From Image</button>
@@ -530,7 +703,7 @@
             <input type="range" id="removerTolerance" min="0" max="150" value="30">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="removerToleranceVal" min="0" max="150" value="30" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="removerToleranceVal" min="0" max="150" value="30" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <button class="action" id="removerApply" style="margin-bottom:6px;">Remove Matching Colour</button>
@@ -538,16 +711,34 @@
           <button class="action ghost history-back-btn" id="removerUndo" style="flex:1;" disabled>← Undo</button>
           <button class="action ghost history-redo-btn" id="removerRedo" style="flex:1;" disabled>Redo →</button>
         </div>
-        <div id="removerStatus" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a8578;margin-top:8px;min-height:14px;"></div>
+        <div id="removerStatus" style="font-family:'Consolas',monospace;font-size:11px;color:#9aa0ac;margin-top:8px;min-height:14px;"></div>
       </div>
 
-      <div class="tool-block">
-        <h3><span class="n">02</span> Touch-up brush</h3>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.5;">Manual trace override brush.</p>
+      <div class="tool-block tool-popout" id="cropBlock">
+        <h3><span class="n">02</span> Crop<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 10px;line-height:1.5;">Removing a background leaves the empty space around it in place — the canvas stays the same size, just with that area now see-through. That wastes room on a gang sheet and makes the artwork harder to place. Trim it away here.</p>
+        <button class="action" id="trimToContentBtn" style="margin-bottom:6px;">Trim to Content</button>
+        <div id="trimStatus" style="font-family:'Consolas',monospace;font-size:11px;color:#9aa0ac;margin:0 0 12px;min-height:14px;"></div>
+        <div style="height:4px;border-top:1px solid var(--field-border);margin-bottom:12px;"></div>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 8px;line-height:1.5;">Or draw your own crop box — useful for cutting out something unwanted, or cropping a picture that still has its background.</p>
+        <button class="action ghost" id="cropMarqueeToggle" style="margin-bottom:8px;">Draw a Crop Box</button>
+        <div class="row" id="cropMarqueeActions" style="display:none;margin-bottom:8px;">
+          <button class="action" id="cropMarqueeApply" style="flex:1;" disabled>Apply Crop</button>
+          <button class="action ghost" id="cropMarqueeCancel" style="flex:1;">Cancel</button>
+        </div>
+        <div class="history-controls">
+          <button class="action ghost history-back-btn" id="cropHistoryBack" style="flex:1;" disabled>← Undo</button>
+          <button class="action ghost history-redo-btn" id="cropHistoryRedo" style="flex:1;" disabled>Redo →</button>
+        </div>
+      </div>
+
+      <div class="tool-block tool-popout" id="panel-touchup">
+        <h3><span class="n">03</span> Touch-up brush<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 10px;line-height:1.5;">Manual trace override brush.</p>
         <div class="row">
           <div style="flex:1">
             <label>brush action</label>
-            <select id="brushMode" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 8px;border:1px solid #c9c2b2;background:#fff;">
+            <select id="brushMode" style="width:100%;font-family:'Consolas',monospace;font-size:12px;padding:6px 8px;border:1px solid var(--field-border);background:var(--white);">
               <option value="erase">Erase (remove)</option>
               <option value="restore">Restore (bring back)</option>
               <option value="speckle">Texture — Light speckle</option>
@@ -556,29 +747,29 @@
             </select>
           </div>
         </div>
-        <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#000;font-weight:500;">brush size — <span id="brushSizeVal">60</span>px</label>
+        <label style="font-family:'Consolas',monospace;font-size:11px;color:var(--ink);font-weight:500;">brush size — <span id="brushSizeVal">60</span>px</label>
         <input type="range" id="brushSize" min="8" max="150" value="60">
         <div id="textureDensityRow" style="display:none;">
           <div style="height:8px"></div>
-          <label style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#000;font-weight:500;">texture density — <span id="textureDensityVal">50</span>%</label>
+          <label style="font-family:'Consolas',monospace;font-size:11px;color:var(--ink);font-weight:500;">texture density — <span id="textureDensityVal">50</span>%</label>
           <input type="range" id="textureDensity" min="5" max="100" value="50">
         </div>
         <div style="height:8px"></div>
         <button class="action ghost" id="brushToggle">Enable brush</button>
 
-        <div id="wholeImageTextureRow" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid #c9c2b2;">
-          <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 8px;line-height:1.5;">Apply the selected texture across the whole design in one pass, at the density set above. Only erodes pixels that already have ink — safe to run more than once to build up more texture.</p>
+        <div id="wholeImageTextureRow" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--field-border);">
+          <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 8px;line-height:1.5;">Apply the selected texture across the whole design in one pass, at the density set above. Only erodes pixels that already have ink — safe to run more than once to build up more texture.</p>
           <button class="action ghost" id="applyWholeTexture">Apply texture to whole image</button>
         </div>
       </div>
 
-      <div class="tool-block" id="upscaleBlock">
-        <h3><span class="n">03</span> Upscale & Smooth (HD)</h3>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.4;">Browser-side resampling with edge smoothing.</p>
+      <div class="tool-block tool-popout" id="upscaleBlock">
+        <h3><span class="n">04</span> Upscale (AI)<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 10px;line-height:1.4;">Real AI reconstruction (same engine as the Upscale tool) — runs fully offline, no blanket resize.</p>
         <div class="row">
           <div style="flex:1">
             <label>Upscale Scale Factor</label>
-            <select id="upscaleFactor" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 8px;border:1px solid #c9c2b2;background:#fff;">
+            <select id="upscaleFactor" style="width:100%;font-family:'Consolas',monospace;font-size:12px;padding:6px 8px;border:1px solid var(--field-border);background:var(--white);">
               <option value="2">2x Density Enhancement</option>
               <option value="4" selected>4x Smart Upscale</option>
               <option value="8">8x Max Density Upscale</option>
@@ -587,19 +778,26 @@
         </div>
         <div class="row" style="align-items: center;">
           <div style="flex:1">
-            <label>Anti-Alias Smoothing Force</label>
-            <input type="range" id="smoothForce" min="0" max="4" value="2" step="1">
+            <label>Artwork type</label>
+            <div style="display:flex;gap:8px;">
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;cursor:pointer;">
+                <input type="radio" name="upscaleModel" value="photo" checked style="margin:0;">Photo/realistic
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;cursor:pointer;">
+                <input type="radio" name="upscaleModel" value="illustration" style="margin:0;">Illustration/flat colour
+              </label>
+            </div>
           </div>
         </div>
         <button class="action" id="applyUpscale">Execute HD Upscale</button>
       </div>
 
-      <div class="tool-block" id="resizeBlock">
-        <h3><span class="n">04</span> Resize to spec</h3>
+      <div class="tool-block tool-popout" id="resizeBlock">
+        <h3><span class="n">05</span> Resize to spec<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
         <div class="row" style="margin-bottom:12px;">
           <div style="flex:1">
             <label>Measurement Unit (Calculates @ 300 DPI)</label>
-            <select id="resizeUnit" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 8px;border:1px solid #c9c2b2;background:#fff;">
+            <select id="resizeUnit" style="width:100%;font-family:'Consolas',monospace;font-size:12px;padding:6px 8px;border:1px solid var(--field-border);background:var(--white);">
               <option value="px">Pixels (px)</option>
               <option value="mm">Millimeters (mm)</option>
             </select>
@@ -610,19 +808,19 @@
           <div style="flex:1"><label id="labelW">width px</label><input type="number" id="w" value="4500"></div>
           <div style="flex:1"><label id="labelH">height px</label><input type="number" id="h" value="5400"></div>
         </div>
-        <label style="font-size:11px;color:#000;font-weight:500;">
+        <label style="font-size:11px;color:var(--ink);font-weight:500;">
           <input type="checkbox" id="lockAspect" checked> Lock Aspect Ratio
         </label>
         <button class="action ghost" id="presetMerch">Merch 4500×5400</button>
         <div style="height:12px"></div>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 8px;line-height:1.4;">If the crop cuts off part of the design, nudge it with these before applying — nothing is touched until you hit Apply.</p>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 8px;line-height:1.4;">If the crop cuts off part of the design, nudge it with these before applying — nothing is touched until you hit Apply.</p>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
           <div style="flex:1">
             <label>Crop Tightness (frees up room to pan both ways, small upscale trade-off)</label>
             <input type="range" id="cropTightness" min="0" max="50" value="0">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="cropTightnessVal" min="0" max="50" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="cropTightnessVal" min="0" max="50" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
@@ -631,7 +829,7 @@
             <input type="range" id="cropOffsetX" min="0" max="100" value="50">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="cropOffsetXVal" min="0" max="100" value="50" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="cropOffsetXVal" min="0" max="100" value="50" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div class="row" style="align-items: center;">
@@ -640,7 +838,7 @@
             <input type="range" id="cropOffsetY" min="0" max="100" value="50">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="cropOffsetYVal" min="0" max="100" value="50" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="cropOffsetYVal" min="0" max="100" value="50" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div style="height:8px"></div>
@@ -649,26 +847,26 @@
         <button class="action" id="applyResize">Apply resize</button>
       </div>
 
-      <div class="tool-block" id="halftoneBlock">
-        <h3><span class="n">05</span> Targeted Halftone</h3>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:4px 0 12px;line-height:1.4;">Pick exactly which colours to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
+      <div class="tool-block tool-popout" id="halftoneBlock">
+        <h3><span class="n">06</span> Targeted Halftone<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:4px 0 12px;line-height:1.4;">Pick exactly which colours to halftone — each gets its own dot pitch and match tolerance. Untouched colours stay pixel-perfect.</p>
         <button class="action ghost" id="colorPickToggle" style="margin-bottom:10px;">Enable Colour Picker (click image to add swatch)</button>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:0 0 10px;line-height:1.4;">Turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch.</p>
-        <div id="swatchList" style="font-family:'IBM Plex Mono',monospace;"></div>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:0 0 10px;line-height:1.4;">Turn this on and click anywhere on the image to add that exact pixel's colour as its own swatch.</p>
+        <div id="swatchList" style="font-family:'Consolas',monospace;"></div>
         <div style="height:8px"></div>
         <button class="action" id="applyHalftone" style="margin-bottom: 6px;">Apply Targeted Halftone</button>
       </div>
 
-      <div class="tool-block">
-        <h3><span class="n">06</span> Colour Adjust</h3>
-        <p style="font-size:11px;color:#000;font-weight:500;margin:4px 0 12px;line-height:1.4;">Compensate for the flattening halftoning causes. Adjust sliders below to your specification, then hit Apply.</p>
+      <div class="tool-block tool-popout" id="panel-colour-adjust">
+        <h3><span class="n">07</span> Colour Adjust<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
+        <p style="font-size:11px;color:var(--ink);font-weight:500;margin:4px 0 12px;line-height:1.4;">Compensate for the flattening halftoning causes. Adjust sliders below to your specification, then hit Apply.</p>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
           <div style="flex:1">
             <label>Brightness</label>
             <input type="range" id="caBrightness" min="-100" max="100" value="0">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="caBrightnessVal" min="-100" max="100" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="caBrightnessVal" min="-100" max="100" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
@@ -677,7 +875,7 @@
             <input type="range" id="caContrast" min="-100" max="100" value="0">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="caContrastVal" min="-100" max="100" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="caContrastVal" min="-100" max="100" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
@@ -686,7 +884,7 @@
             <input type="range" id="caSaturation" min="-100" max="100" value="0">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="caSaturationVal" min="-100" max="100" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="caSaturationVal" min="-100" max="100" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div class="row" style="align-items: center; margin-bottom: 8px;">
@@ -695,7 +893,7 @@
             <input type="range" id="caVibrancy" min="0" max="100" value="0">
           </div>
           <div style="width:60px; text-align:right; margin-top:8px;">
-            <input type="number" id="caVibrancyVal" min="0" max="100" value="0" style="width:56px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid #c9c2b2; padding:3px 4px;">
+            <input type="number" id="caVibrancyVal" min="0" max="100" value="0" style="width:56px; font-family:'Consolas',monospace; font-size:12px; font-weight:bold; text-align:right; border:1px solid var(--field-border); padding:3px 4px;">
           </div>
         </div>
         <div style="height:4px"></div>
@@ -703,9 +901,11 @@
         <button class="action ghost" id="resetColorAdjust">Reset Colour Adjustment</button>
       </div>
 
-      <div class="tool-block">
-        <h3><span class="n">07</span> Final Preview & Export</h3>
+      <div class="tool-block tool-popout" id="panel-export">
+        <h3><span class="n">08</span> Final Preview & Export<button type="button" class="popout-close" data-close title="Close">&times;</button></h3>
         <button class="action" id="download" data-original-text="Download Master PNG (300 DPI)" style="margin-bottom:8px;">Download Master PNG (300 DPI)</button>
+        <button class="action ghost" id="saveToSuite" style="margin-bottom:8px; display:none;">Save to Gallery</button>
+        <button class="action ghost" id="sendToGang" style="margin-bottom:8px; display:none;">Send to Gang Sheets</button>
         <div style="display:flex;flex-direction:column;gap:8px;">
           <a href="https://www.buymeacoffee.com/Vector_Print_Prep" target="_blank" style="display:block;width:100%;">
             <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" style="width:100%;height:auto;display:block;border-radius:4px;">
@@ -718,14 +918,79 @@
     </div>
   </div>
 
-  <div class="footnote">
-    Local client sandbox • All processing in-browser for DTF / Print-on-Demand workflows.<br>
-    © 2026 Crystal Groupz. All rights reserved. — hello@crystalgroupz.co.uk
-  </div>
+  <!-- The standalone site's own footer (branding + copyright for printprep.click, a different
+       business entirely) removed here for the same reason the header logo was removed above:
+       Graphic Suite's own shell already provides the app's identity, and this tool is shared
+       between two different apps (Crystal Suite, Graphical Magic) - a hardcoded brand name here
+       would be wrong in whichever app it wasn't meant for. -->
 </div>
 
+<script id="gs-busy-script">
+window.GSBusy = (function () {
+  var count = 0, timer = null, el = null, label = 'Working…';
+  function ensure() {
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'gsBusy';
+    el.setAttribute('role', 'status');
+    el.innerHTML = '<div class="gs-spin"></div><span></span>';
+    document.body.appendChild(el);
+    return el;
+  }
+  function show() {
+    var e = ensure();
+    e.querySelector('span').textContent = label;
+    e.classList.add('show');
+    document.documentElement.classList.add('gs-busy');
+  }
+  function hide() {
+    if (el) el.classList.remove('show');
+    document.documentElement.classList.remove('gs-busy');
+  }
+  // immediate=true shows straight away (use for work known to be slow); otherwise a 150ms delay
+  // avoids flicker on quick operations. Every start() must be paired with exactly one stop().
+  function start(text, immediate) {
+    count++;
+    if (text) label = text;
+    if (count === 1) {
+      clearTimeout(timer);
+      if (immediate) show(); else timer = setTimeout(show, 150);
+    } else if (el && el.classList.contains('show')) {
+      el.querySelector('span').textContent = label;
+    }
+  }
+  function stop() {
+    count = Math.max(0, count - 1);
+    if (count === 0) { clearTimeout(timer); hide(); }
+  }
+  function setLabel(text) {
+    label = text;
+    if (el) el.querySelector('span').textContent = text;
+  }
+  // Lets the spinner paint before synchronous heavy work blocks the thread, then always clears it.
+  function nextPaint() { return new Promise(function (r) { requestAnimationFrame(function () { setTimeout(r, 0); }); }); }
+  async function run(text, fn) {
+    start(text, true);
+    try { await nextPaint(); return await fn(); } finally { stop(); }
+  }
+  // A task with a live percentage in the pill, e.g. task("Loading image") -> "Loading image — 42%".
+  // Call progress(0..1) as work advances and finish() exactly once when done (safe to call twice).
+  function task(text) {
+    var finished = false;
+    start(text + " — 0%", true);
+    return {
+      progress: function (fraction) {
+        if (finished) return;
+        setLabel(text + " — " + Math.max(0, Math.min(100, Math.round(fraction * 100))) + "%");
+      },
+      finish: function () { if (finished) return; finished = true; stop(); }
+    };
+  }
+  return { start: start, stop: stop, setLabel: setLabel, run: run, task: task };
+})();
+</script>
 <script type="module">
-import { removeBackground } from 'https://esm.sh/@imgly/background-removal@1.5.7';
+import { removeBackgroundLocal } from './vendor/isnet-remover.js';   // in-house AI remover (ISNet, runs on this PC, no internet)
 
 const drop = document.getElementById('drop');
 const fileInput = document.getElementById('file');
@@ -734,25 +999,6 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const dimsEl = document.getElementById('dims');
 const sizeEl = document.getElementById('size');
-
-// Simple public counter (abacus.jasoncameron.dev) — this is a static, backend-less site, so
-// there's nowhere of our own to store a shared running total. This service just increments/reads
-// a named number with no auth, which is fine for a rough "how's it doing" stat but isn't
-// tamper-proof — if it's ever unreachable, the display just falls back to "—" rather than
-// breaking anything else on the page.
-const STATS_NAMESPACE = 'crystalgroupz-print-prep';
-const visitCountEl = document.getElementById('visitCount');
-const downloadCountEl = document.getElementById('downloadCount');
-async function bumpCounter(key, displayEl) {
-  try {
-    const res = await fetch(`https://abacus.jasoncameron.dev/hit/${STATS_NAMESPACE}/${key}`);
-    const data = await res.json();
-    if (displayEl) displayEl.textContent = data.value.toLocaleString();
-  } catch (e) {
-    if (displayEl) displayEl.textContent = '—';
-  }
-}
-bumpCounter('visits', visitCountEl);
 
 const bgMethod = document.getElementById('bgMethod');
 const colorKeyControls = document.getElementById('colorKeyControls');
@@ -780,7 +1026,18 @@ let redoStack = [];
 let originalWidthForRatio = 4500;
 let originalHeightForRatio = 5400;
 
-function saveHistory() {
+// Small helper so pristineSourceCanvas/preRemovalCanvas can be snapshotted as compressed PNG
+// blobs the same way the main canvas already is (see saveHistory's own comment on why: a raw
+// clone would be ~97MB per step at Merch spec). Resolves null for a null/undefined canvas so
+// callers don't need their own guard.
+function canvasBlobAsync(cv) {
+  return new Promise(resolve => {
+    if (!cv) { resolve(null); return; }
+    cv.toBlob(b => resolve(b), 'image/png');
+  });
+}
+
+async function saveHistory() {
   // Compressed PNG blob instead of a raw <canvas> clone. A raw clone holds uncompressed
   // pixel data in memory — at Merch spec (4500×5400) that's ~97MB PER STEP, so 30 steps of
   // undo history could mean close to 3GB of RAM. A PNG blob of the same image is typically a
@@ -794,13 +1051,32 @@ function saveHistory() {
   // background, hole clicks, upscale etc. do). Without this the two get out of sync entirely.
   const colorToleranceSnapshot = parseInt(colorTolerance.value) || 0;
   const alphaThresholdSnapshot = parseInt(alphaThreshold.value) || 0;
-  canvas.toBlob(blob => {
-    if(!blob) return;
-    historyStack.push({ blob, width: w, height: h, holeSeeds: seedsSnapshot, colorTolerance: colorToleranceSnapshot, alphaThreshold: alphaThresholdSnapshot });
-    if (historyStack.length > 30) historyStack.shift();
-    redoStack = [];
-    updateHistoryButtons();
-  }, 'image/png');
+  const doneSnapshotIds = doneSnapshot();
+  // REAL BUG this fixes: pristineSourceCanvas/preRemovalCanvas used to live entirely outside the
+  // undo/redo system — only ever reassigned by the action that set them (Remove background,
+  // Reset, a hole click, a colour-key slider drag...), never by Undo/Redo itself. So stepping
+  // back past a "Remove background" checkpoint put the ORIGINAL picture back on screen while
+  // pristineSourceCanvas silently kept whatever it was last set to. Any later action that
+  // recomputes it from "the current canvas" (a hole click, a colour-key slider nudge) then baked
+  // that reverted, background-still-there canvas into pristineSourceCanvas — so the very next
+  // Touch-up brush "Restore" stroke painted the original background back in, not just whatever
+  // that stroke had erased. Fix: snapshot both alongside the main canvas on every history step,
+  // and restore all three together in restoreFromHistory, so they can never drift apart.
+  const [blob, pristineBlob, preRemovalBlob] = await Promise.all([
+    canvasBlobAsync(canvas),
+    canvasBlobAsync(pristineSourceCanvas),
+    canvasBlobAsync(preRemovalCanvas),
+  ]);
+  if (!blob) return;
+  historyStack.push({
+    blob, width: w, height: h, holeSeeds: seedsSnapshot,
+    colorTolerance: colorToleranceSnapshot, alphaThreshold: alphaThresholdSnapshot, done: doneSnapshotIds,
+    pristineBlob, pristineW: pristineSourceCanvas ? pristineSourceCanvas.width : 0, pristineH: pristineSourceCanvas ? pristineSourceCanvas.height : 0,
+    preRemovalBlob, preRemovalW: preRemovalCanvas ? preRemovalCanvas.width : 0, preRemovalH: preRemovalCanvas ? preRemovalCanvas.height : 0,
+  });
+  if (historyStack.length > 30) historyStack.shift();
+  redoStack = [];
+  updateHistoryButtons();
 }
 
 function updateHistoryButtons() {
@@ -825,9 +1101,34 @@ async function restoreFromHistory(entry) {
     alphaThreshold.value = entry.alphaThreshold;
     alphaThreshVal.value = entry.alphaThreshold;
   }
+  // See saveHistory's comment: pristineSourceCanvas/preRemovalCanvas must land back at exactly
+  // what they were AT this history point, in the same step as the pixels above — otherwise the
+  // Touch-up brush's Restore mode (which paints from pristineSourceCanvas) goes stale the moment
+  // Undo/Redo crosses a "Remove background" checkpoint.
+  if (entry.pristineBlob) {
+    const pBitmap = await createImageBitmap(entry.pristineBlob);
+    pristineSourceCanvas = document.createElement('canvas');
+    pristineSourceCanvas.width = entry.pristineW || pBitmap.width;
+    pristineSourceCanvas.height = entry.pristineH || pBitmap.height;
+    pristineSourceCanvas.getContext('2d').drawImage(pBitmap, 0, 0);
+    if (pBitmap.close) pBitmap.close();
+  } else {
+    pristineSourceCanvas = null;
+  }
+  if (entry.preRemovalBlob) {
+    const rBitmap = await createImageBitmap(entry.preRemovalBlob);
+    preRemovalCanvas = document.createElement('canvas');
+    preRemovalCanvas.width = entry.preRemovalW || rBitmap.width;
+    preRemovalCanvas.height = entry.preRemovalH || rBitmap.height;
+    preRemovalCanvas.getContext('2d').drawImage(rBitmap, 0, 0);
+    if (rBitmap.close) rBitmap.close();
+  } else {
+    preRemovalCanvas = null;
+  }
   renderZoomSize();
   syncHalftoneCache();
     syncColorAdjustCache();
+  applyDoneFlags(entry.done || []);
   updateMeta();
 }
 
@@ -924,6 +1225,7 @@ function setBusy(btn, on, isResetAction = false) {
 
 function runBusy(btn, work, isResetAction = false, onDone = null){
   setBusy(btn, true, isResetAction);
+  if (!isResetAction) GSBusy.start('Working…', true);
   requestAnimationFrame(()=>{
     setTimeout(()=>{
       try{
@@ -934,21 +1236,37 @@ function runBusy(btn, work, isResetAction = false, onDone = null){
         btn.textContent = "Error";
         btn.disabled = false;
         btn.classList.remove('busy');
+      } finally {
+        if (!isResetAction) GSBusy.stop();
       }
     }, 40);
   });
 }
 
-// Once a one-shot, destructive/compounding step (background removal, upscale, halftone) is
-// applied, every control in that tool-block is disabled — including its own undo/reset buttons —
-// so it can't be re-triggered or fiddled with in a way that quietly re-processes an
-// already-processed canvas (which is what was compounding/breaking things). The only way back
-// into that step afterward is the page-level "Start over" button.
-function lockSection(container, triggerBtn, lockedLabel) {
-  container.querySelectorAll('button, input, select').forEach(el => { el.disabled = true; });
-  triggerBtn.classList.remove('busy');
-  triggerBtn.classList.add('done-state');
-  triggerBtn.textContent = lockedLabel;
+// Steps that change the picture for good (background removal, upscale, halftone) turn their button green
+// and say "Done" when finished. Nothing is locked or disabled: running one again just asks Yes / No first
+// (see gsAskProceed). The green state is saved with every undo step, so Go Back / Undo / Redo put the button
+// exactly as it was, and loading a new picture or resetting the background puts every button back to normal.
+const DONE_IDS = ['applyBgRemove', 'applyUpscale', 'applyHalftone'];
+const DONE_LABELS = {};
+DONE_IDS.forEach(id => { DONE_LABELS[id] = document.getElementById(id).textContent; });
+function markDone(btn) {
+  btn.disabled = false;
+  btn.classList.remove('busy');
+  btn.classList.add('done-state');
+  btn.dataset.done = '1';
+  btn.textContent = '✓ Done';
+}
+function clearDone(btn) {
+  btn.disabled = false;
+  btn.classList.remove('busy', 'done-state');
+  delete btn.dataset.done;
+  btn.textContent = DONE_LABELS[btn.id] || btn.textContent;
+}
+function clearAllDone() { DONE_IDS.forEach(id => clearDone(document.getElementById(id))); }
+function doneSnapshot() { return DONE_IDS.filter(id => document.getElementById(id).dataset.done); }
+function applyDoneFlags(ids) {
+  DONE_IDS.forEach(id => { const b = document.getElementById(id); if (ids.includes(id)) markDone(b); else clearDone(b); });
 }
 
 const previewHolder = document.querySelector('.preview-holder');
@@ -1295,21 +1613,21 @@ let swatches = [];
 
 function renderSwatchList(){
   const list = document.getElementById('swatchList');
-  if(!swatches.length){ list.innerHTML = '<p style="font-size:11px;color:#000;font-weight:500;">No colours picked yet — enable the colour picker and click the image.</p>'; return; }
+  if(!swatches.length){ list.innerHTML = '<p style="font-size:11px;color:var(--ink);font-weight:500;">No colours picked yet — enable the colour picker and click the image.</p>'; return; }
   list.innerHTML = swatches.map((s,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid #c9c2b2;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border:1px solid var(--field-border);flex-wrap:wrap;">
       <div style="width:22px;height:22px;border:1px solid #1B1B18;background:rgb(${s.r},${s.g},${s.b});flex:0 0 auto;"></div>
       <label style="flex:0 0 auto;display:flex;align-items:center;gap:4px;font-size:11px;">
         <input type="checkbox" data-swatch-field="enabled" data-swatch-idx="${i}" ${s.enabled ? 'checked' : ''}> Halftone
       </label>
       <div style="flex:0 0 auto;display:flex;align-items:center;gap:6px;">
-        <label style="font-size:10px;color:#000;font-weight:500;">Hole Size</label>
-        <input type="number" data-swatch-field="dotPitch" data-swatch-idx="${i}" min="1" max="32" step="0.5" value="${s.dotPitch}" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 4px;border:1px solid #c9c2b2;">
+        <label style="font-size:10px;color:var(--ink);font-weight:500;">Hole Size</label>
+        <input type="number" data-swatch-field="dotPitch" data-swatch-idx="${i}" min="1" max="32" step="0.5" value="${s.dotPitch}" style="width:48px;font-family:'Consolas',monospace;font-size:11px;padding:3px 4px;border:1px solid var(--field-border);">
       </div>
       <div style="flex:1 1 160px;display:flex;align-items:center;gap:6px;min-width:150px;">
-        <label style="font-size:10px;color:#000;font-weight:500;white-space:nowrap;">Tolerance</label>
+        <label style="font-size:10px;color:var(--ink);font-weight:500;white-space:nowrap;">Tolerance</label>
         <input type="range" data-swatch-field="tolerance" data-swatch-idx="${i}" min="0" max="180" value="${s.tolerance}" style="flex:1;">
-        <input type="number" data-swatch-field="tolerance" data-swatch-idx="${i}" min="0" max="180" value="${s.tolerance}" style="width:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 4px;border:1px solid #c9c2b2;">
+        <input type="number" data-swatch-field="tolerance" data-swatch-idx="${i}" min="0" max="180" value="${s.tolerance}" style="width:48px;font-family:'Consolas',monospace;font-size:11px;padding:3px 4px;border:1px solid var(--field-border);">
       </div>
     </div>
   `).join('');
@@ -1415,9 +1733,20 @@ function applyColorAdjustLive() {
   });
 });
 
+// Same class of bug as Colour Remover for both handlers below: brightness/contrast/saturation/
+// vibrancy change the RGB the Touch-up brush's Restore mode would paint back in for this area if
+// pristineSourceCanvas were left holding the pre-adjustment colours — refreshed here so Restore
+// respects the adjustment instead of quietly undoing it wherever it's used afterwards.
+function refreshPristineFromCanvas() {
+  pristineSourceCanvas = document.createElement('canvas');
+  pristineSourceCanvas.width = canvas.width;
+  pristineSourceCanvas.height = canvas.height;
+  pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
+}
 document.getElementById('applyColorAdjust').addEventListener('click', (e) => {
   runBusy(e.target, () => {
     syncColorAdjustLiveBaseline();
+    refreshPristineFromCanvas();
     syncHalftoneCache();
     saveHistory();
     updateMeta();
@@ -1431,6 +1760,7 @@ document.getElementById('resetColorAdjust').addEventListener('click', (e) => {
     caVibrancy.value = 0; caVibrancyVal.value = 0;
     if (colorAdjustResetCanvas) preColorAdjustCacheCanvas = colorAdjustResetCanvas;
     runColorAdjust();
+    refreshPristineFromCanvas();
     syncHalftoneCache();
     saveHistory();
     updateMeta();
@@ -1447,11 +1777,20 @@ drop.addEventListener('click', ()=>fileInput.click());
 fileInput.addEventListener('change', ()=>{ if(fileInput.files[0]) loadFile(fileInput.files[0]); });
 
 function loadFile(f){
+  // Percentage: file read is measured for real (0-70%); decode/canvas setup step 75% -> 90% -> done.
+  const task = GSBusy.task('Loading image');
   const reader = new FileReader();
+  reader.onprogress = e=>{ if (e.lengthComputable) task.progress(0.7 * e.loaded / e.total); };
+  reader.onerror = ()=> task.finish();
   reader.onload = e=>{
+    task.progress(0.75);
     originalDataUrl = e.target.result;
     img = new Image();
+    img.onerror = ()=> task.finish();
     img.onload = ()=>{
+      task.progress(0.9);
+      // Let the pill repaint at 90% before the heavy synchronous canvas work below.
+      requestAnimationFrame(()=> setTimeout(()=>{ try {
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img,0,0);
@@ -1475,10 +1814,13 @@ function loadFile(f){
 
       historyStack = [];
       holeSeeds = [];
+      clearAllDone();
       saveHistory();
       syncHalftoneCache();
     syncColorAdjustCache();
       updateMeta();
+      } finally { task.finish(); }
+      }, 0));
     };
     img.src = originalDataUrl;
   };
@@ -1508,6 +1850,7 @@ document.getElementById('resetBgRemove').addEventListener('click', (e) => {
     fitZoomToContainer();
     syncHalftoneCache();
     syncColorAdjustCache();
+    clearAllDone();
     saveHistory();
     updateMeta();
     const processBtn = document.getElementById('applyBgRemove');
@@ -1519,28 +1862,59 @@ document.getElementById('resetBgRemove').addEventListener('click', (e) => {
   }, true);
 });
 
-document.getElementById('applyUpscale').addEventListener('click', (e) => {
-  runBusy(e.target, () => {
-    const scale = parseInt(document.getElementById('upscaleFactor').value);
-    const smoothIterations = parseInt(document.getElementById('smoothForce').value);
-    const w = canvas.width, h = canvas.height, targetW = w * scale, targetH = h * scale;
+document.getElementById('applyUpscale').addEventListener('click', async (e) => {
+  const btn = e.target;
+  if (!window.graphicSuite || !window.graphicSuite.upscaleImage) {
+    alert('AI upscaling is only available inside the desktop app.');
+    return;
+  }
+  if (btn.dataset.done && !(await gsAskProceed('Upscale again?', 'This picture has already been upscaled. Upscaling again processes it a second time and makes it bigger still.'))) return;
+
+  const scale = parseInt(document.getElementById('upscaleFactor').value);
+  const model = document.querySelector('input[name="upscaleModel"]:checked').value;
+
+  btn.disabled = true;
+  btn.classList.add('busy');
+  const originalText = btn.textContent;
+  btn.textContent = 'Starting…';
+  GSBusy.start('Upscaling with AI — this can take a minute…', true);
+
+  let unsubscribe = null;
+  try {
+    unsubscribe = window.graphicSuite.onUpscaleProgress((data) => {
+      btn.textContent = `${data.stage.replace(/…$/, '')} ${Math.round(data.percent || 0)}%`;
+      GSBusy.setLabel(`Upscaling — ${Math.round(data.percent || 0)}%`);
+    });
+
+    // Upscales whatever the canvas holds right now (e.g. after background
+    // removal), not the original untouched asset — matches this panel's
+    // existing "operates on the current canvas" behaviour for every other
+    // step.
+    const sourceDataUrl = canvas.toDataURL('image/png');
+    const result = await window.graphicSuite.upscaleImage({ imageDataUrl: sourceDataUrl, scale, model });
+
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Could not load the upscaled result'));
+      el.src = result.dataUrl;
+    });
+
+    // 6x/8x's last-mile adjustment (see the Upscale tool's own main.ts
+    // comment for why this never goes through the AI engine itself) is
+    // folded straight into this one drawImage rather than done as a
+    // separate step, since we're drawing into the working canvas anyway.
+    const factor = result.finalResizeFactor || 1;
+    const targetW = Math.round(img.naturalWidth * factor);
+    const targetH = Math.round(img.naturalHeight * factor);
+
     const highResCanvas = document.createElement('canvas');
     highResCanvas.width = targetW; highResCanvas.height = targetH;
     const hrCtx = highResCanvas.getContext('2d');
     hrCtx.imageSmoothingEnabled = true;
     hrCtx.imageSmoothingQuality = 'high';
-    hrCtx.drawImage(canvas, 0, 0, targetW, targetH);
-    
-    if (smoothIterations > 0) {
-      const hrData = hrCtx.getImageData(0, 0, targetW, targetH);
-      const d = hrData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        let alpha = d[i+3];
-        if (alpha > 0 && alpha < 255) d[i+3] = alpha > 100 ? 255 : 0;
-      }
-      hrCtx.putImageData(hrData, 0, 0);
-    }
-    
+    hrCtx.drawImage(img, 0, 0, targetW, targetH);
+
     const upscaleSrcTmp = document.createElement('canvas');
     upscaleSrcTmp.width = targetW; upscaleSrcTmp.height = targetH;
     upscaleSrcTmp.getContext('2d').drawImage(highResCanvas, 0, 0);
@@ -1561,9 +1935,19 @@ document.getElementById('applyUpscale').addEventListener('click', (e) => {
     renderZoomSize();
     syncHalftoneCache();
     syncColorAdjustCache();
+    markDone(btn);
     saveHistory();
     updateMeta();
-  }, false, () => lockSection(document.getElementById('upscaleBlock'), e.target, "✓ Locked — Start Over to redo"));
+  } catch (err) {
+    console.error(err);
+    btn.textContent = originalText;
+    btn.disabled = false;
+    btn.classList.remove('busy');
+    alert(`Upscale failed: ${err && err.message ? err.message : err}. If this keeps happening, try updating your graphics drivers.`);
+  } finally {
+    if (unsubscribe) unsubscribe();
+    GSBusy.stop();
+  }
 });
 
 resizeUnit.addEventListener('change', () => {
@@ -1739,14 +2123,25 @@ document.getElementById('applyResize').addEventListener('click', (e)=>{
   });
 });
 
-document.getElementById('applyHalftone').addEventListener('click', (e)=>{
-  runBusy(e.target, () => {
+document.getElementById('applyHalftone').addEventListener('click', async (e)=>{
+  const hbtn = e.target;
+  if (hbtn.dataset.done && !(await gsAskProceed('Apply the halftone again?', 'The halftone has already been applied to this picture. Applying it again processes the picture a second time.'))) return;
+  runBusy(hbtn, () => {
     renderHalftone();
+    // Same class of bug as Colour Remover: renderHalftone() replaces the canvas with a completely
+    // different dot pattern, but without this, pristineSourceCanvas would still hold the
+    // pre-halftone continuous-tone image — so a Touch-up brush Restore stroke after applying a
+    // halftone would paint smooth pre-halftone pixels back in, not halftone dots.
+    pristineSourceCanvas = document.createElement('canvas');
+    pristineSourceCanvas.width = canvas.width;
+    pristineSourceCanvas.height = canvas.height;
+    pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
     syncHalftoneCache();
     syncColorAdjustCache();
+    markDone(hbtn);
     saveHistory();
     updateMeta();
-  }, false, () => lockSection(document.getElementById('halftoneBlock'), e.target, "✓ Locked — Start Over to redo"));
+  }, false, () => {});
 });
 
 const bgHistoryBackBtn = document.getElementById('bgHistoryBack');
@@ -1776,6 +2171,7 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
   const btn = document.getElementById('applyBgRemove');
   const resetBtn = document.getElementById('resetBgRemove');
   if (btn.disabled || resetBtn.disabled) return;
+  if (btn.dataset.done && bgMethod.value === 'ai' && !(await gsAskProceed('Remove the background again?', 'The background has already been removed from this picture. Running it again processes the picture a second time.'))) return;
   const track = document.getElementById('bgProgressTrack');
   const fill = document.getElementById('bgProgressFill');
   const method = bgMethod.value;
@@ -1802,9 +2198,10 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
       pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
       syncHalftoneCache();
     syncColorAdjustCache();
+      markDone(btn);
+      resetBtn.disabled = false;
       saveHistory();
       updateMeta();
-      lockSection(document.getElementById('bgRemovalBlock'), btn, "✓ Locked — Start Over to redo");
     }, 40);
   } else {
     preRemovalCanvas = document.createElement('canvas');
@@ -1815,9 +2212,10 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
     setBusy(btn, true, false);
     track.classList.add('show');
     fill.classList.add('indeterminate');
+    GSBusy.start('Removing background with AI — first run can take a minute…', true);
     try {
       const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
-      const resultBlob = await removeBackground(blob, { model: 'medium', output: { quality: 1 } });
+      const resultBlob = await removeBackgroundLocal(blob);
       const im = new Image();
       im.onload = ()=>{
         canvas.width = im.width; canvas.height = im.height;
@@ -1833,16 +2231,20 @@ document.getElementById('applyBgRemove').addEventListener('click', async ()=>{
         pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
         syncHalftoneCache();
     syncColorAdjustCache();
+        markDone(btn);
+        resetBtn.disabled = false;
         saveHistory();
         updateMeta();
         track.classList.remove('show');
-        lockSection(document.getElementById('bgRemovalBlock'), btn, "✓ Locked — Start Over to redo");
+        GSBusy.stop();
       };
+      im.onerror = () => GSBusy.stop();
       im.src = URL.createObjectURL(resultBlob);
     } catch(err) {
       console.error(err);
       setBusy(btn, false, false);
       track.classList.remove('show');
+      GSBusy.stop();
       resetBtn.disabled = false;
       updateHistoryButtons();
     }
@@ -1856,6 +2258,171 @@ const brushSizeVal = document.getElementById('brushSizeVal');
 function disableBrush() { brushOn = false; brushToggleBtn.textContent = 'Enable brush'; brushToggleBtn.classList.remove('done-state'); }
 function disableHoleRemove() { holeRemoveOn = false; holeRemoveBtn.textContent = 'Enable Hole Removal (click enclosed gaps)'; holeRemoveBtn.classList.remove('done-state'); }
 function disableColorPick() { colorPickOn = false; colorPickBtn.textContent = 'Enable Colour Picker (click image to add swatch)'; colorPickBtn.classList.remove('done-state'); }
+
+// ---- Crop (box 02): "Trim to Content" (auto-crop to the bounding box of every non-transparent
+// pixel — the direct fix for the dead space Remove Background/Colour Remover leave behind, since
+// neither of them ever shrinks the canvas itself) and a manual marquee crop (drag a box, hit Apply
+// Crop, for cropping out something unwanted or cropping a picture that still has its background).
+// Both funnel through applyCropRect so every canvas that must stay pixel-for-pixel the same size
+// as the live one gets cropped in lockstep — skipping that would let a later colour-tolerance
+// slider tweak (which recomputes from preRemovalCanvas, untouched by a crop) silently undo it.
+const trimToContentBtn = document.getElementById('trimToContentBtn');
+const trimStatus = document.getElementById('trimStatus');
+const cropMarqueeToggleBtn = document.getElementById('cropMarqueeToggle');
+const cropMarqueeActions = document.getElementById('cropMarqueeActions');
+const cropMarqueeApplyBtn = document.getElementById('cropMarqueeApply');
+const cropMarqueeCancelBtn = document.getElementById('cropMarqueeCancel');
+const cropMarqueeOverlay = document.getElementById('cropMarqueeOverlay');
+let cropMarqueeOn = false, cropDragging = false, cropDragStart = null, cropRectPx = null;
+
+function disableCropMarquee() {
+  cropMarqueeOn = false;
+  cropDragging = false;
+  cropDragStart = null;
+  cropRectPx = null;
+  cropMarqueeToggleBtn.textContent = 'Draw a Crop Box';
+  cropMarqueeToggleBtn.classList.remove('done-state');
+  cropMarqueeActions.style.display = 'none';
+  cropMarqueeApplyBtn.disabled = true;
+  cropMarqueeOverlay.classList.remove('show');
+  canvas.classList.remove('brush-active');
+}
+
+// sx/sy/sw/sh are in canvas pixel space. originalImportCanvas is deliberately left uncropped —
+// Reset / Start Over still goes all the way back to the original imported picture, crop included.
+function applyCropRect(sx, sy, sw, sh) {
+  sx = Math.max(0, Math.round(sx)); sy = Math.max(0, Math.round(sy));
+  sw = Math.round(sw); sh = Math.round(sh);
+  sw = Math.min(sw, canvas.width - sx); sh = Math.min(sh, canvas.height - sy);
+  if (sw < 4 || sh < 4) return false; // too small to be a real crop, not worth acting on
+  if (sx === 0 && sy === 0 && sw === canvas.width && sh === canvas.height) return false; // no-op
+
+  const cropped = document.createElement('canvas');
+  cropped.width = sw; cropped.height = sh;
+  cropped.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+  const recrop = (src) => {
+    if (!src || src.width !== canvas.width || src.height !== canvas.height) return src;
+    const out = document.createElement('canvas');
+    out.width = sw; out.height = sh;
+    out.getContext('2d').drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+    return out;
+  };
+  preRemovalCanvas = recrop(preRemovalCanvas);
+  pristineSourceCanvas = recrop(pristineSourceCanvas);
+  holeSeeds = holeSeeds.map(s => ({ x: s.x - sx, y: s.y - sy })).filter(s => s.x >= 0 && s.y >= 0 && s.x < sw && s.y < sh);
+
+  canvas.width = sw; canvas.height = sh;
+  ctx.clearRect(0, 0, sw, sh);
+  ctx.drawImage(cropped, 0, 0);
+
+  syncHalftoneCache();
+  syncColorAdjustCache();
+  saveHistory();
+  updateMeta();
+  fitZoomToContainer();
+  return true;
+}
+
+trimToContentBtn.addEventListener('click', () => {
+  runBusy(trimToContentBtn, () => {
+    const w = canvas.width, h = canvas.height;
+    if (!w || !h) { trimStatus.textContent = 'Nothing loaded yet.'; return; }
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 0) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) { trimStatus.textContent = 'Nothing to trim — the canvas is empty.'; return; }
+    const sw = maxX - minX + 1, sh = maxY - minY + 1;
+    if (minX === 0 && minY === 0 && sw === w && sh === h) {
+      trimStatus.textContent = "Nothing to trim — there's no empty space around the edges.";
+      return;
+    }
+    const savedPct = Math.round((1 - (sw * sh) / (w * h)) * 100);
+    applyCropRect(minX, minY, sw, sh);
+    trimStatus.textContent = `Trimmed to ${sw} × ${sh} (${savedPct}% less empty canvas).`;
+  }, false);
+});
+
+cropMarqueeToggleBtn.addEventListener('click', () => {
+  cropMarqueeOn = !cropMarqueeOn;
+  cropMarqueeToggleBtn.textContent = cropMarqueeOn ? 'Cancel — drag a box on the image' : 'Draw a Crop Box';
+  cropMarqueeToggleBtn.classList.toggle('done-state', cropMarqueeOn);
+  canvas.classList.toggle('brush-active', cropMarqueeOn);
+  cropMarqueeActions.style.display = cropMarqueeOn ? 'flex' : 'none';
+  cropMarqueeApplyBtn.disabled = true;
+  cropRectPx = null;
+  cropMarqueeOverlay.classList.remove('show');
+  if (cropMarqueeOn) {
+    if (brushOn) disableBrush();
+    if (holeRemoveOn) disableHoleRemove();
+    if (colorPickOn) disableColorPick();
+    if (removerEyedropperOn) {
+      removerEyedropperOn = false;
+      removerEyedropperBtn.textContent = 'Pick Colour From Image';
+      removerEyedropperBtn.classList.remove('done-state');
+    }
+  }
+});
+
+function canvasPointFromEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: Math.max(0, Math.min(canvas.width, (e.clientX - rect.left) / rect.width * canvas.width)),
+    y: Math.max(0, Math.min(canvas.height, (e.clientY - rect.top) / rect.height * canvas.height)),
+  };
+}
+
+function updateCropMarqueeOverlay(x0, y0, x1, y1) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width / canvas.width, scaleY = rect.height / canvas.height;
+  const sx = Math.min(x0, x1), sy = Math.min(y0, y1);
+  const sw = Math.abs(x1 - x0), sh = Math.abs(y1 - y0);
+  cropMarqueeOverlay.style.left = (canvas.offsetLeft + sx * scaleX) + 'px';
+  cropMarqueeOverlay.style.top = (canvas.offsetTop + sy * scaleY) + 'px';
+  cropMarqueeOverlay.style.width = (sw * scaleX) + 'px';
+  cropMarqueeOverlay.style.height = (sh * scaleY) + 'px';
+  cropMarqueeOverlay.classList.add('show');
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  if (!cropMarqueeOn || spacePressed) return;
+  cropDragging = true;
+  cropDragStart = canvasPointFromEvent(e);
+  cropMarqueeApplyBtn.disabled = true;
+  e.preventDefault();
+});
+window.addEventListener('mousemove', (e) => {
+  if (!cropMarqueeOn || !cropDragging || !cropDragStart) return;
+  const p = canvasPointFromEvent(e);
+  updateCropMarqueeOverlay(cropDragStart.x, cropDragStart.y, p.x, p.y);
+});
+window.addEventListener('mouseup', (e) => {
+  if (!cropMarqueeOn || !cropDragging || !cropDragStart) return;
+  cropDragging = false;
+  const p = canvasPointFromEvent(e);
+  const sx = Math.min(cropDragStart.x, p.x), sy = Math.min(cropDragStart.y, p.y);
+  const sw = Math.abs(p.x - cropDragStart.x), sh = Math.abs(p.y - cropDragStart.y);
+  if (sw < 4 || sh < 4) { cropRectPx = null; cropMarqueeApplyBtn.disabled = true; cropMarqueeOverlay.classList.remove('show'); return; }
+  cropRectPx = { x: sx, y: sy, w: sw, h: sh };
+  cropMarqueeApplyBtn.disabled = false;
+});
+
+cropMarqueeApplyBtn.addEventListener('click', () => {
+  if (!cropRectPx) return;
+  applyCropRect(cropRectPx.x, cropRectPx.y, cropRectPx.w, cropRectPx.h);
+  disableCropMarquee();
+});
+cropMarqueeCancelBtn.addEventListener('click', () => disableCropMarquee());
+
+document.getElementById('cropHistoryBack').addEventListener('click', undo);
+document.getElementById('cropHistoryRedo').addEventListener('click', redo);
 
 // ---- Colour Remover (box 02): global colour-distance removal, not a connected flood-fill like
 // Remove Background above — every pixel anywhere in the canvas within tolerance of the target
@@ -2017,6 +2584,20 @@ removerApplyBtn.addEventListener('click', () => {
       if (Math.sqrt(dr * dr + dg * dg + db * db) <= tolerance) { data[i + 3] = 0; removedCount++; }
     }
     ctx.putImageData(imgData, 0, 0);
+    // REAL BUG this fixes: every other "commit pixels to the canvas" action here (Remove
+    // background, a hole click) refreshes pristineSourceCanvas from the canvas right after
+    // committing, so the Touch-up brush's Restore mode paints from a snapshot that already
+    // reflects that step. This Apply button was the one place that got missed — it changed the
+    // canvas and saved a history step exactly like the others, but never touched
+    // pristineSourceCanvas, so Restore kept pulling from whatever the canvas looked like BEFORE
+    // this colour was removed. In practice: remove the background, use Colour Remover to pick out
+    // a couple of stray bits, then Restore-brush over something you erased with the Touch-up
+    // brush — and the pixels Colour Remover had just removed came back too, even though the
+    // background itself (correctly) stayed gone.
+    pristineSourceCanvas = document.createElement('canvas');
+    pristineSourceCanvas.width = w;
+    pristineSourceCanvas.height = h;
+    pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
     syncHalftoneCache();
     syncColorAdjustCache();
     saveHistory();
@@ -2185,6 +2766,7 @@ document.getElementById('applyWholeTexture').addEventListener('click', (e) => {
   const originalText = btn.textContent;
   btn.textContent = 'Processing...';
   btn.classList.add('busy');
+  GSBusy.start('Applying texture…', true);
   requestAnimationFrame(() => {
     setTimeout(() => {
       try {
@@ -2201,6 +2783,14 @@ document.getElementById('applyWholeTexture').addEventListener('click', (e) => {
             stampFn(ctx, x + rand(-spacing * 0.4, spacing * 0.4), y + rand(-spacing * 0.4, spacing * 0.4), radius, density);
           }
         }
+        // Same class of bug as Colour Remover: this punches transparency into the canvas via
+        // destination-out (real pixel removal), so without refreshing pristineSourceCanvas here
+        // a later Touch-up brush Restore stroke would paint the pre-texture, un-punched pixels
+        // straight back in.
+        pristineSourceCanvas = document.createElement('canvas');
+        pristineSourceCanvas.width = w;
+        pristineSourceCanvas.height = h;
+        pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
         syncHalftoneCache();
         syncColorAdjustCache();
         saveHistory();
@@ -2209,6 +2799,7 @@ document.getElementById('applyWholeTexture').addEventListener('click', (e) => {
         console.error(err);
         btn.textContent = 'Error';
       } finally {
+        GSBusy.stop();
         btn.disabled = false;
         btn.classList.remove('busy');
         if (btn.textContent === 'Processing...') btn.textContent = originalText;
@@ -2272,8 +2863,12 @@ window.addEventListener('mouseup', ()=>{
   } 
 });
 
-document.getElementById('download').addEventListener('click', (e)=>{
-  const btn = e.target; btn.disabled = true; btn.textContent = "Processing..."; btn.classList.add('busy');
+document.getElementById('download').addEventListener('click', async (e)=>{
+  const btn = e.target;
+  const chosenName = await promptForFileName('print-prep-300dpi', { label: 'Download PNG as:', confirmText: 'Download' });
+  if (!chosenName) return;
+  btn.disabled = true; btn.textContent = "Processing..."; btn.classList.add('busy');
+  GSBusy.start('Preparing your PNG…', true);
   setTimeout(() => {
     // Final safety pass: halftone dots, brush strokes and resampling all anti-alias their edges,
     // leaving stray semi-transparent fringe pixels. Print/DTF output can't render partial opacity
@@ -2292,8 +2887,8 @@ document.getElementById('download').addEventListener('click', (e)=>{
         const chunkCrc = crc32(pHYsChunk.subarray(4, 17));
         pHYsChunk[17] = (chunkCrc >> 24) & 0xFF; pHYsChunk[18] = (chunkCrc >> 16) & 0xFF; pHYsChunk[19] = (chunkCrc >> 8) & 0xFF; pHYsChunk[20] = chunkCrc & 0xFF;
         const outputBlob = new Blob([new Uint8Array(buffer).subarray(0, 33), pHYsChunk, new Uint8Array(buffer).subarray(33)], { type: 'image/png' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(outputBlob); a.download = 'print-prep-300dpi.png'; a.click();
-        bumpCounter('downloads', downloadCountEl);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(outputBlob); a.download = ensureExtension(chosenName, 'png'); a.click();
+        GSBusy.stop();
         btn.classList.remove('busy'); btn.classList.add('done-state'); btn.textContent = "✓ Done";
         setTimeout(() => { btn.classList.remove('done-state'); btn.disabled = false; btn.textContent = "Download Master PNG (300 DPI)"; }, 3000);
       };
@@ -2317,6 +2912,492 @@ function crc32(bytes){
   let c = 0xFFFFFFFF;
   for(let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
   return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+// --- Icon-rail popout panels ----------------------------------------------
+// Ported verbatim from Vector Prep — purely a display layer on top of the
+// existing tool-blocks: nothing here touches any of their inputs, IDs, or
+// the functions wired to them above, it only shows/hides the panel and
+// toggles which rail button looks active. See Vector Prep's identical block
+// for the full history/rationale of each piece.
+(function () {
+  const railButtons = document.querySelectorAll('.rail-btn');
+  const panels = document.querySelectorAll('.tool-popout');
+
+  function closeAll() {
+    panels.forEach((p) => p.classList.remove('open'));
+    railButtons.forEach((b) => b.classList.remove('active'));
+    document.body.classList.remove('panel-open');
+  }
+
+  const manuallyPositioned = new Set();
+
+  function centerPopoutOnPreview(panel) {
+    const previewHolder = document.getElementById('previewHolder');
+    const reference = previewHolder || document.querySelector('.canvas-panel') || document.body;
+    const refRect = reference.getBoundingClientRect();
+    const targetCenterY = refRect.top + refRect.height / 2;
+
+    panel.style.left = '';
+    panel.style.right = '24px';
+    const panelHeight = panel.getBoundingClientRect().height;
+    const maxTop = Math.max(0, window.innerHeight - panelHeight - 12);
+    const top = Math.min(Math.max(12, targetCenterY - panelHeight / 2), maxTop);
+    panel.style.top = top + 'px';
+  }
+
+  function resetPopoutPositions() {
+    manuallyPositioned.clear();
+    panels.forEach((p) => {
+      p.style.left = '';
+      p.style.top = '';
+      p.style.right = '';
+      p.style.width = '';
+      p.style.height = '';
+      p.style.maxHeight = '';
+    });
+  }
+  window.__resetPopoutPositions = resetPopoutPositions;
+
+  railButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById(btn.dataset.panel);
+      const alreadyOpen = panel.classList.contains('open');
+      closeAll();
+      if (!alreadyOpen) {
+        panel.classList.add('open');
+        btn.classList.add('active');
+        document.body.classList.add('panel-open');
+        if (!manuallyPositioned.has(panel.id)) centerPopoutOnPreview(panel);
+      }
+    });
+  });
+
+  panels.forEach((panel) => {
+    const closeBtn = panel.querySelector('[data-close]');
+    if (closeBtn) closeBtn.addEventListener('click', closeAll);
+
+    const header = panel.querySelector('h3');
+    if (!header) return;
+    let dragging = false;
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    header.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('[data-close]')) return;
+      dragging = true;
+      const rect = panel.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = rect.left;
+      startTop = rect.top;
+      panel.style.right = 'auto';
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      manuallyPositioned.add(panel.id);
+      const rect = panel.getBoundingClientRect();
+      const maxLeft = window.innerWidth - rect.width;
+      const maxTop = window.innerHeight - rect.height;
+      const newLeft = Math.min(Math.max(0, startLeft + (e.clientX - startX)), Math.max(0, maxLeft));
+      const newTop = Math.min(Math.max(0, startTop + (e.clientY - startY)), Math.max(0, maxTop));
+      panel.style.left = newLeft + 'px';
+      panel.style.top = newTop + 'px';
+    });
+
+    document.addEventListener('pointerup', () => { dragging = false; });
+
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'popout-resize-handle';
+    resizeHandle.title = 'Drag to resize';
+    resizeHandle.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3 3 14M14 8 8 14M14 13l-1 1"/></svg>';
+    panel.appendChild(resizeHandle);
+
+    let resizing = false;
+    let resizeStartX = 0, resizeStartY = 0, resizeStartW = 0, resizeStartH = 0;
+
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      resizing = true;
+      const rect = panel.getBoundingClientRect();
+      resizeStartX = e.clientX;
+      resizeStartY = e.clientY;
+      resizeStartW = rect.width;
+      resizeStartH = rect.height;
+      panel.style.maxHeight = 'none';
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (!resizing) return;
+      const rect = panel.getBoundingClientRect();
+      const maxW = window.innerWidth - rect.left;
+      const maxH = window.innerHeight - rect.top;
+      const newW = Math.min(Math.max(220, resizeStartW + (e.clientX - resizeStartX)), maxW);
+      const newH = Math.min(Math.max(120, resizeStartH + (e.clientY - resizeStartY)), maxH);
+      panel.style.width = newW + 'px';
+      panel.style.height = newH + 'px';
+    });
+
+    document.addEventListener('pointerup', () => { resizing = false; });
+  });
+
+  // "Remove background" is the natural first stop after loading an image —
+  // open it by default rather than leaving the user looking at a bare
+  // canvas with no indication of where to go next.
+  function openFirstPanelByDefault() {
+    closeAll();
+    resetPopoutPositions();
+    const firstPanel = document.getElementById('bgRemovalBlock');
+    firstPanel.classList.add('open');
+    document.querySelector('.rail-btn[data-panel="bgRemovalBlock"]').classList.add('active');
+    document.body.classList.add('panel-open');
+    centerPopoutOnPreview(firstPanel);
+  }
+  window.__openFirstPanelByDefault = openFirstPanelByDefault;
+})();
+
+// loadFile's stage.classList.add('on') happens inside img.onload, which fires
+// asynchronously after img.src is set — calling openFirstPanelByDefault
+// immediately after loadFile() returns would run before that, against a
+// zero-sized stage. Same fix as Vector Prep's waitForStageVisible: poll with
+// requestAnimationFrame until the stage genuinely has visible layout.
+(function () {
+  const originalLoadFile = loadFile;
+  function waitForStageVisible(callback, framesLeft) {
+    if (framesLeft === undefined) framesLeft = 120;
+    if (stage.classList.contains('on') && stage.getBoundingClientRect().height > 0) {
+      callback();
+      return;
+    }
+    if (framesLeft <= 0) return;
+    requestAnimationFrame(() => waitForStageVisible(callback, framesLeft - 1));
+  }
+  loadFile = function (...args) {
+    const result = originalLoadFile.apply(this, args);
+    waitForStageVisible(() => {
+      if (window.__openFirstPanelByDefault) window.__openFirstPanelByDefault();
+    });
+    return result;
+  };
+})();
+
+// --- Save to Suite / Download naming dialog --------------------------------
+// Ported verbatim from Vector Prep's promptForFileName (folder picker
+// included) — see that file for the full history of each piece.
+function promptForFileName(defaultName, opts) {
+  opts = opts || {};
+  const labelText = opts.label || 'Save as:';
+  const confirmText = opts.confirmText || 'Save';
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--white);border:1px solid var(--field-border);padding:20px;width:340px;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,0.4);';
+
+    const label = document.createElement('div');
+    label.textContent = labelText;
+    label.style.cssText = "font-family:'Consolas',monospace;font-size:12px;font-weight:500;color:var(--ink);margin-bottom:8px;";
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = defaultName;
+    input.style.cssText = "width:100%;box-sizing:border-box;font-family:'Consolas',monospace;font-size:13px;padding:8px;border:1px solid var(--field-border);background:transparent;color:var(--ink);margin-bottom:14px;";
+
+    let folderSelect = null;
+    let customerSelect = null;
+    let newFolderInput = null;
+    const folderFields = [];
+    if (Array.isArray(opts.folders)) {
+      const folderLabel = document.createElement('div');
+      folderLabel.textContent = 'Save into:';
+      folderLabel.style.cssText = "font-family:'Consolas',monospace;font-size:12px;font-weight:500;color:var(--ink);margin-bottom:8px;";
+
+      folderSelect = document.createElement('select');
+      folderSelect.style.cssText = "width:100%;box-sizing:border-box;font-family:'Consolas',monospace;font-size:13px;padding:8px;border:1px solid var(--field-border);background:var(--white);color:var(--ink);margin-bottom:10px;";
+      const rootOption = document.createElement('option');
+      rootOption.value = '';
+      rootOption.textContent = '(Top level)';
+      folderSelect.appendChild(rootOption);
+      opts.folders.forEach((f) => {
+        const o = document.createElement('option');
+        o.value = f;
+        o.textContent = f;
+        folderSelect.appendChild(o);
+      });
+      const newOption = document.createElement('option');
+      newOption.value = '__new__';
+      newOption.textContent = '+ New folder…';
+      folderSelect.appendChild(newOption);
+      if (opts.defaultFolder && opts.folders.includes(opts.defaultFolder)) {
+        folderSelect.value = opts.defaultFolder;
+      }
+
+      newFolderInput = document.createElement('input');
+      newFolderInput.type = 'text';
+      newFolderInput.placeholder = 'New folder name';
+      newFolderInput.style.cssText = "width:100%;box-sizing:border-box;font-family:'Consolas',monospace;font-size:13px;padding:8px;border:1px solid var(--field-border);background:transparent;color:var(--ink);margin-bottom:10px;display:none;";
+      folderSelect.addEventListener('change', () => {
+        const isNew = folderSelect.value === '__new__';
+        newFolderInput.style.display = isNew ? '' : 'none';
+        if (isNew) newFolderInput.focus();
+      });
+
+      folderFields.push(folderLabel, folderSelect, newFolderInput);
+    }
+
+    // "For customer": only offered when the host app has a customer directory and passes it in
+    // (Graphical Magic). Any other host passes no customers, so this dialog is unchanged there.
+    if (Array.isArray(opts.customers) && opts.customers.length) {
+      const customerLabel = document.createElement('div');
+      customerLabel.textContent = 'For customer:';
+      customerLabel.style.cssText = "font-family:'Consolas',monospace;font-size:12px;font-weight:500;color:var(--ink);margin-bottom:8px;";
+
+      customerSelect = document.createElement('select');
+      customerSelect.style.cssText = "width:100%;box-sizing:border-box;font-family:'Consolas',monospace;font-size:13px;padding:8px;border:1px solid var(--field-border);background:var(--white);color:var(--ink);margin-bottom:10px;";
+      const noCustomer = document.createElement('option');
+      noCustomer.value = '';
+      noCustomer.textContent = '(No customer)';
+      customerSelect.appendChild(noCustomer);
+      opts.customers.forEach((c) => {
+        const o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.company ? c.name + ' — ' + c.company : c.name;
+        customerSelect.appendChild(o);
+      });
+      folderFields.push(customerLabel, customerSelect);
+    }
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.className = 'ghost';
+    cancelBtn.style.cssText = 'padding:8px 14px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.textContent = confirmText;
+    confirmBtn.style.cssText = 'padding:8px 14px;border:1px solid var(--ink);background:var(--ink);color:var(--white);cursor:pointer;';
+
+    function resolveFolder() {
+      if (!folderSelect) return undefined;
+      if (folderSelect.value === '__new__') {
+        return newFolderInput.value.trim();
+      }
+      return folderSelect.value;
+    }
+    function buildResult() {
+      const name = input.value.trim() || defaultName;
+      return folderSelect ? { name, folder: resolveFolder(), customerId: customerSelect ? customerSelect.value : '' } : name;
+    }
+    function close(result) {
+      document.removeEventListener('keydown', onKeydown);
+      overlay.remove();
+      resolve(result);
+    }
+    function onKeydown(e) {
+      if (e.key === 'Enter') { e.preventDefault(); close(buildResult()); }
+      if (e.key === 'Escape') { e.preventDefault(); close(null); }
+    }
+
+    cancelBtn.addEventListener('click', () => close(null));
+    confirmBtn.addEventListener('click', () => close(buildResult()));
+    document.addEventListener('keydown', onKeydown);
+
+    btnRow.append(cancelBtn, confirmBtn);
+    box.append(label, input, ...folderFields, btnRow);
+    overlay.append(box);
+    document.body.append(overlay);
+    input.focus();
+    input.select();
+  });
+}
+
+function ensureExtension(name, ext) {
+  return name.toLowerCase().endsWith('.' + ext) ? name : `${name}.${ext}`;
+}
+
+if (window.graphicSuite) {
+  const saveBtn = document.getElementById('saveToSuite');
+  saveBtn.style.display = '';
+  saveBtn.addEventListener('click', async () => {
+    if (!originalDataUrl) return;
+    const folders = window.graphicSuite.listGalleryFolders ? await window.graphicSuite.listGalleryFolders() : [];
+    // Only Graphical Magic provides a customer directory; elsewhere this is simply empty.
+    const customers = window.graphicSuite.listCustomers ? await window.graphicSuite.listCustomers() : [];
+    const defaultFolder = folders.find((f) => ['print prep', 'printprep', 'prints'].includes(f.toLowerCase()));
+    const result = await promptForFileName(`Print prep ${new Date().toLocaleString()}`, {
+      label: 'Save to Gallery as:',
+      confirmText: 'Save',
+      folders,
+      defaultFolder,
+      customers,
+    });
+    if (!result) return;
+    const { name, folder, customerId } = result;
+    if (!name) return;
+    saveBtn.disabled = true;
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saving…';
+    try {
+      await window.graphicSuite.saveToGallery({
+        tool: 'print-prep',
+        title: name,
+        format: 'png',
+        content: canvas.toDataURL('image/png'),
+        folder,
+        customerId: customerId || undefined,
+      });
+      saveBtn.textContent = '✓ Image Saved';
+      saveBtn.style.background = '#2e7d32';
+      saveBtn.style.color = '#fff';
+      saveBtn.style.borderColor = '#2e7d32';
+      setTimeout(() => {
+        saveBtn.textContent = originalText;
+        saveBtn.style.background = '';
+        saveBtn.style.color = '';
+        saveBtn.style.borderColor = '';
+      }, 10000);
+    } catch (err) {
+      saveBtn.textContent = 'Save failed';
+      setTimeout(() => { saveBtn.textContent = originalText; }, 2000);
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+}
+
+// Asks Yes / No before doing something a second time. Resolves true for Yes, false for No (or Esc). Keys: Y = yes, N = no.
+function gsAskProceed(titleText, messageText) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.setAttribute('data-gs-dialog', '1');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--white);border:1px solid var(--field-border);padding:24px;width:400px;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,0.4);text-align:center;';
+    const title = document.createElement('div');
+    title.textContent = titleText;
+    title.style.cssText = 'font-size:17px;font-weight:700;color:var(--ink);margin-bottom:8px;';
+    const msg = document.createElement('div');
+    msg.textContent = messageText;
+    msg.style.cssText = 'font-size:14px;color:var(--ink);margin-bottom:18px;line-height:1.4;';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;justify-content:center;';
+    const mk = (label, primary) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'flex:1;padding:11px 14px;border:1px solid var(--ink);cursor:pointer;font-size:15px;font-weight:700;' + (primary ? 'background:var(--ink);color:var(--white);' : 'background:transparent;color:var(--ink);');
+      return b;
+    };
+    const noBtn = mk('No', false), yesBtn = mk('Yes, run it again', true);
+    const finish = (v) => { document.removeEventListener('keydown', onKey, true); overlay.remove(); resolve(v); };
+    const onKey = (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'escape' || k === 'n') { e.preventDefault(); finish(false); }
+      else if (k === 'y') { e.preventDefault(); finish(true); }
+    };
+    noBtn.addEventListener('click', () => finish(false));
+    yesBtn.addEventListener('click', () => finish(true));
+    document.addEventListener('keydown', onKey, true);
+    row.append(noBtn, yesBtn);
+    box.append(title, msg, row);
+    overlay.append(box);
+    document.body.append(overlay);
+    noBtn.focus();
+  });
+}
+
+// After something is sent to the gang sheet: ask what to do next, so nobody is left wondering.
+// "Add next image" clears this screen for the next picture; "Go to the gang sheet" switches over to it. Esc just closes it.
+function gsSentDialog(count, onNext) {
+  const overlay = document.createElement('div');
+  overlay.setAttribute('data-gs-dialog', '1');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--white);border:1px solid var(--field-border);padding:24px;width:400px;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,0.4);text-align:center;';
+  const title = document.createElement('div');
+  title.textContent = '✓ Added to the gang sheet';
+  title.style.cssText = 'font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px;';
+  const msg = document.createElement('div');
+  msg.textContent = count === 1 ? 'There is 1 image on the gang sheet.' : 'There are ' + count + ' images on the gang sheet.';
+  msg.style.cssText = 'font-size:14px;color:var(--ink);margin-bottom:18px;';
+  const mk = (label, hint, primary) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.style.cssText = 'display:block;width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:10px;border:1px solid var(--ink);cursor:pointer;text-align:center;' +
+      (primary ? 'background:var(--ink);color:var(--white);' : 'background:transparent;color:var(--ink);');
+    const l = document.createElement('div'); l.textContent = label; l.style.cssText = 'font-size:15px;font-weight:700;';
+    const h = document.createElement('div'); h.textContent = hint; h.style.cssText = 'font-size:12px;margin-top:3px;opacity:0.85;';
+    b.append(l, h);
+    return b;
+  };
+  const nextBtn = mk('Add next image', 'Clears this screen, ready for the next one', true);
+  const goBtn = mk('Go to the gang sheet →', 'See and arrange your images', false);
+  const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); };
+  const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+  nextBtn.addEventListener('click', () => { close(); onNext(); });
+  goBtn.addEventListener('click', () => { close(); window.graphicSuite.openGangSheets(); });
+  document.addEventListener('keydown', onKey, true);
+  box.append(title, msg, nextBtn, goBtn);
+  overlay.append(box);
+  document.body.append(overlay);
+  nextBtn.focus();
+}
+
+// Send the finished picture straight to the DTF Gang Sheet builder (only inside Crystal Suite / Graphical Magic).
+// It is the same picture "Download Master PNG (300 DPI)" makes - transparent edges snapped clean and the 300 DPI size
+// written in - so the builder places it at its real size, as if it had been downloaded and dragged in.
+if (window.graphicSuite && window.graphicSuite.sendToGangSheet) {
+  const sendBtn = document.getElementById('sendToGang');
+  sendBtn.style.display = '';
+  // Works on a copy, so the picture you're editing isn't touched.
+  async function masterPngDataUrl() {
+    const copy = document.createElement('canvas');
+    copy.width = canvas.width; copy.height = canvas.height;
+    const cctx = copy.getContext('2d');
+    cctx.drawImage(canvas, 0, 0);
+    const finalData = cctx.getImageData(0, 0, copy.width, copy.height);
+    const fd = finalData.data;
+    for (let i = 3; i < fd.length; i += 4) { fd[i] = fd[i] < 127 ? 0 : 255; }
+    cctx.putImageData(finalData, 0, 0);
+    const blob = await new Promise(res => copy.toBlob(res, 'image/png'));
+    const buffer = await blob.arrayBuffer();
+    const dpi = 300, physMeter = Math.round(dpi * 39.3700787), pHYsChunk = new Uint8Array(21);
+    pHYsChunk[3] = 0x09; pHYsChunk[4] = 0x70; pHYsChunk[5] = 0x48; pHYsChunk[6] = 0x59; pHYsChunk[7] = 0x73;
+    pHYsChunk[8] = (physMeter >> 24) & 0xFF; pHYsChunk[9] = (physMeter >> 16) & 0xFF; pHYsChunk[10] = (physMeter >> 8) & 0xFF; pHYsChunk[11] = physMeter & 0xFF;
+    pHYsChunk[12] = (physMeter >> 24) & 0xFF; pHYsChunk[13] = (physMeter >> 16) & 0xFF; pHYsChunk[14] = (physMeter >> 8) & 0xFF; pHYsChunk[15] = physMeter & 0xFF; pHYsChunk[16] = 0x01;
+    const chunkCrc = crc32(pHYsChunk.subarray(4, 17));
+    pHYsChunk[17] = (chunkCrc >> 24) & 0xFF; pHYsChunk[18] = (chunkCrc >> 16) & 0xFF; pHYsChunk[19] = (chunkCrc >> 8) & 0xFF; pHYsChunk[20] = chunkCrc & 0xFF;
+    const out = new Blob([new Uint8Array(buffer).subarray(0, 33), pHYsChunk, new Uint8Array(buffer).subarray(33)], { type: 'image/png' });
+    return await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(out); });
+  }
+  let sentCount = 0;
+  sendBtn.addEventListener('click', async () => {
+    if (!originalDataUrl) return;
+    const originalText = sendBtn.textContent;
+    if (!stage.classList.contains('on')) { // the file is chosen but the picture isn't ready on screen yet
+      sendBtn.textContent = 'Still loading…';
+      setTimeout(() => { sendBtn.textContent = originalText; }, 1500);
+      return;
+    }
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    try {
+      const dataUrl = await masterPngDataUrl();
+      sentCount += 1;
+      const r = await window.graphicSuite.sendToGangSheet({ name: 'Print prep ' + sentCount, dataUrl });
+      sendBtn.textContent = originalText;
+      gsSentDialog(r.waiting, () => location.reload()); // 'Add next image' = the same clean start as this page's Reset
+    } catch (err) {
+      sendBtn.textContent = 'Couldn\'t send';
+      setTimeout(() => { sendBtn.textContent = originalText; }, 2500);
+    } finally {
+      sendBtn.disabled = false;
+    }
+  });
 }
 </script>
 </body>

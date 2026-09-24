@@ -1,0 +1,17 @@
+{
+  "name": "isnet-general-use",
+  "format": "onnx",
+  "size": 178648008,
+  "sha256": "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a",
+  "parts": [
+    "part-000.bin",
+    "part-001.bin",
+    "part-002.bin",
+    "part-003.bin",
+    "part-004.bin",
+    "part-005.bin",
+    "part-006.bin",
+    "part-007.bin",
+    "part-008.bin"
+  ]
+}

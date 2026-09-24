@@ -1744,9 +1744,20 @@ function applyColorAdjustLive() {
   clearTimeout(colorAdjustLiveTimeout);
   colorAdjustLiveTimeout = setTimeout(runColorAdjust, 100);
 }
+// Gated per-slider (not inside applyColorAdjustLive/runColorAdjust themselves) specifically so
+// Reset still works when blocked — Reset calls runColorAdjust() directly to snap everything back
+// to 0, which must always be allowed regardless of desktop-app status. Dragging a slider writes
+// straight to the live canvas within ~100ms (see applyColorAdjustLive), so the gate has to sit
+// here, before that happens, not on the Apply button below — gating only Apply would do nothing,
+// since the adjusted picture would already be sitting on the canvas, downloadable, before Apply
+// was ever clicked.
 [[caBrightness, caBrightnessVal, -100, 100], [caContrast, caContrastVal, -100, 100], [caSaturation, caSaturationVal, -100, 100], [caVibrancy, caVibrancyVal, 0, 100]].forEach(([slider, num, min, max]) => {
-  slider.addEventListener('input', e => { num.value = e.target.value; applyColorAdjustLive(); });
+  slider.addEventListener('input', e => {
+    if (!requireDesktopApp('Colour adjustment')) { slider.value = num.value; return; }
+    num.value = e.target.value; applyColorAdjustLive();
+  });
   num.addEventListener('input', e => {
+    if (!requireDesktopApp('Colour adjustment')) { num.value = slider.value; return; }
     let val = Math.max(min, Math.min(max, parseInt(e.target.value) || 0));
     slider.value = val;
     applyColorAdjustLive();
@@ -1764,6 +1775,7 @@ function refreshPristineFromCanvas() {
   pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
 }
 document.getElementById('applyColorAdjust').addEventListener('click', (e) => {
+  if (!requireDesktopApp('Colour adjustment')) return;
   runBusy(e.target, () => {
     syncColorAdjustLiveBaseline();
     refreshPristineFromCanvas();
@@ -1882,12 +1894,21 @@ document.getElementById('resetBgRemove').addEventListener('click', (e) => {
   }, true);
 });
 
+// This standalone site (printprep.click) is the free preview; Upscale, Resize and Colour
+// Adjustment are desktop-app-only features that fund the rest of it. window.graphicSuite only
+// exists when this page is loaded inside the Graphical Magic desktop app (injected by its
+// preload script) — plain undefined here, on any ordinary browser, which is exactly the signal
+// this gate relies on. Returns whether the feature may proceed, same true/false contract every
+// caller below already expects from the pre-existing Upscale check this was pulled out of.
+function requireDesktopApp(featureLabel) {
+  if (window.graphicSuite) return true;
+  alert(`${featureLabel} is a desktop-app-only feature. You have to buy the desktop version — Graphical Magic — to use it. Everything else on this site stays free.`);
+  return false;
+}
+
 document.getElementById('applyUpscale').addEventListener('click', async (e) => {
   const btn = e.target;
-  if (!window.graphicSuite || !window.graphicSuite.upscaleImage) {
-    alert('AI upscaling is only available inside the desktop app.');
-    return;
-  }
+  if (!requireDesktopApp('AI upscaling')) return;
   if (btn.dataset.done && !(await gsAskProceed('Upscale again?', 'This picture has already been upscaled. Upscaling again processes it a second time and makes it bigger still.'))) return;
 
   const scale = parseInt(document.getElementById('upscaleFactor').value);
@@ -2106,6 +2127,7 @@ cropTightnessVal.addEventListener('input', e => {
 resizeUnit.addEventListener('change', updateCropOverlay);
 
 document.getElementById('applyResize').addEventListener('click', (e)=>{
+  if (!requireDesktopApp('Resize')) return;
   runBusy(e.target, ()=>{
     const rect = computeCropRect();
     if (!rect) return;
@@ -2883,6 +2905,40 @@ window.addEventListener('mouseup', ()=>{
   } 
 });
 
+// This standalone site's export is a free preview, not the deliverable — the actual print-ready
+// file is a desktop-app ($) feature. A single corner logo is a five-second crop or clone-stamp fix,
+// so this tiles a semi-transparent label diagonally across the ENTIRE canvas instead: removing it
+// cleanly means reconstructing every tile's worth of underlying artwork, not just one region, which
+// is destructive to fine linework even for a capable inpainting tool. Not literally unremovable —
+// nothing baked into a raster image can be, generative inpainting keeps getting better — but this
+// is the strongest practical deterrent available without a server-side component. Drawn onto a
+// throwaway copy of the canvas at export time only; the live working canvas the user keeps editing
+// never gets touched by this.
+function drawExportWatermark(wctx, w, h) {
+  wctx.save();
+  const big = Math.max(w, h);
+  wctx.font = `bold ${Math.round(big * 0.042)}px Arial, sans-serif`;
+  wctx.textAlign = 'center';
+  wctx.textBaseline = 'middle';
+  const label = 'PRINTPREP.CLICK FREE PREVIEW — BUY DESKTOP APP TO REMOVE';
+  const stepX = big * 0.62, stepY = big * 0.22, range = big * 1.5;
+  wctx.translate(w / 2, h / 2);
+  wctx.rotate(-Math.PI / 6);
+  for (let y = -range; y <= range; y += stepY) {
+    for (let x = -range; x <= range; x += stepX) {
+      // Fill (dark) + stroke (light) on every tile so the mark stays visible against both light
+      // and dark artwork - print-ready art here is very often light line-art on a transparent
+      // background, which a fill-only watermark can go almost invisible against.
+      wctx.lineWidth = Math.max(1, big * 0.0025);
+      wctx.strokeStyle = 'rgba(255,255,255,0.32)';
+      wctx.strokeText(label, x, y);
+      wctx.fillStyle = 'rgba(0,0,0,0.28)';
+      wctx.fillText(label, x, y);
+    }
+  }
+  wctx.restore();
+}
+
 document.getElementById('download').addEventListener('click', async (e)=>{
   const btn = e.target;
   const chosenName = await promptForFileName('print-prep-300dpi', { label: 'Download PNG as:', confirmText: 'Download' });
@@ -2897,7 +2953,19 @@ document.getElementById('download').addEventListener('click', async (e)=>{
     const fd = finalData.data;
     for (let i = 3; i < fd.length; i += 4) { fd[i] = fd[i] < 127 ? 0 : 255; }
     ctx.putImageData(finalData, 0, 0);
-    canvas.toBlob(blob => {
+    // Watermark only this standalone free site's export, on a throwaway copy of the canvas —
+    // window.graphicSuite only exists inside the paid desktop app, so this is always true here,
+    // but written as a real check (not hardcoded) in case this file is ever reused elsewhere.
+    let exportSource = canvas;
+    if (!window.graphicSuite) {
+      const wmCanvas = document.createElement('canvas');
+      wmCanvas.width = canvas.width; wmCanvas.height = canvas.height;
+      const wctx = wmCanvas.getContext('2d');
+      wctx.drawImage(canvas, 0, 0);
+      drawExportWatermark(wctx, wmCanvas.width, wmCanvas.height);
+      exportSource = wmCanvas;
+    }
+    exportSource.toBlob(blob => {
       const reader = new FileReader();
       reader.onload = function(e) {
         const buffer = e.target.result, dpi = 300, physMeter = Math.round(dpi * 39.3700787), pHYsChunk = new Uint8Array(21);

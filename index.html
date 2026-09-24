@@ -1064,7 +1064,25 @@ function canvasBlobAsync(cv) {
   });
 }
 
-async function saveHistory() {
+// REAL BUG this fixes (found by direct repro, not guessed): saveHistory does real async work
+// (three canvas.toBlob conversions) before it actually pushes the new entry onto historyStack —
+// fast, but never instant, and every caller fires it with "saveHistory();", no await, on purpose
+// (blocking on it after every single stroke/action would be far too slow). undo()/redo() used to
+// act on historyStack immediately, with no idea a save might still be in flight. Click Colour
+// Remover's Apply, then click "← Undo" right away (completely normal, fast real-world usage) and
+// the Undo could run BEFORE that Apply's own history entry had landed — so undo() popped the
+// PREVIOUS entry instead (the one from before Colour Remover), landing two real steps back for one
+// Undo click: reproduced directly, it undid the colour removal AND brought the background back,
+// from a single click. Fixed by tracking whichever saveHistory() call is currently in flight and
+// having undo()/redo() wait for it to finish landing before touching the stack at all.
+let historySaveInFlight = null;
+function saveHistory() {
+  const savePromise = saveHistoryNow();
+  historySaveInFlight = savePromise;
+  savePromise.finally(() => { if (historySaveInFlight === savePromise) historySaveInFlight = null; });
+  return savePromise;
+}
+async function saveHistoryNow() {
   // Compressed PNG blob instead of a raw <canvas> clone. A raw clone holds uncompressed
   // pixel data in memory — at Merch spec (4500×5400) that's ~97MB PER STEP, so 30 steps of
   // undo history could mean close to 3GB of RAM. A PNG blob of the same image is typically a
@@ -1159,7 +1177,18 @@ async function restoreFromHistory(entry) {
   updateMeta();
 }
 
+// Loops rather than a single await: either flag could get set again in the moment between
+// awaiting one and checking the other (a runBusy operation's own work() is what sets
+// historySaveInFlight, so a fresh one can legitimately start right as busyOperationInFlight
+// clears) — this only returns once a whole tick has passed with neither pending.
+async function waitForHistoryQuiet() {
+  while (busyOperationInFlight || historySaveInFlight) {
+    await (busyOperationInFlight || historySaveInFlight);
+  }
+}
+
 async function undo() {
+  await waitForHistoryQuiet();
   if (historyStack.length <= 1) return;
   redoStack.push(historyStack.pop());
   const prev = historyStack[historyStack.length - 1];
@@ -1168,6 +1197,7 @@ async function undo() {
 }
 
 async function redo() {
+  await waitForHistoryQuiet();
   if (redoStack.length === 0) return;
   const next = redoStack.pop();
   historyStack.push(next);
@@ -1250,39 +1280,62 @@ function setBusy(btn, on, isResetAction = false) {
   }
 }
 
+// REAL BUG this fixes, found alongside the saveHistory race below (same repro, one click of
+// Colour Remover's own Undo right after Apply — completely normal fast usage): runBusy defers the
+// real work() call behind a requestAnimationFrame + 40ms setTimeout on purpose (lets "Processing…"
+// paint before the heavy synchronous work blocks the thread), which means work() — and the
+// saveHistory() call inside it — hasn't even STARTED yet by the time that click handler returns.
+// Undo/Redo don't go through runBusy at all, so nothing stopped one from running (and fully
+// completing, popping the wrong entry off historyStack) in that ~40ms+ gap before Apply's own
+// effects had happened. Worse: once Apply's deferred work() finally ran afterward, it operated on
+// whatever the canvas now was (i.e. whatever Undo had just put there), corrupting the timeline
+// further rather than just being "one step behind". busyOperationInFlight tracks the full
+// click-to-finish lifespan of every runBusy call so undo()/redo() (above) can wait for the current
+// one to genuinely finish before touching the stack at all.
+let busyOperationInFlight = null;
 function runBusy(btn, work, isResetAction = false, onDone = null){
   setBusy(btn, true, isResetAction);
   if (!isResetAction) GSBusy.start('Working…', true);
-  requestAnimationFrame(()=>{
-    setTimeout(()=>{
-      try{
-        work();
-        if (onDone) onDone(); else setBusy(btn, false, isResetAction);
-      } catch(e) {
-        console.error(e);
-        btn.textContent = "Error";
-        btn.disabled = false;
-        btn.classList.remove('busy');
-      } finally {
-        if (!isResetAction) GSBusy.stop();
-      }
-    }, 40);
+  const opPromise = new Promise((resolve) => {
+    requestAnimationFrame(()=>{
+      setTimeout(()=>{
+        try{
+          work();
+          if (onDone) onDone(); else setBusy(btn, false, isResetAction);
+        } catch(e) {
+          console.error(e);
+          btn.textContent = "Error";
+          btn.disabled = false;
+          btn.classList.remove('busy');
+        } finally {
+          if (!isResetAction) GSBusy.stop();
+          resolve();
+        }
+      }, 40);
+    });
   });
+  busyOperationInFlight = opPromise;
+  opPromise.finally(() => { if (busyOperationInFlight === opPromise) busyOperationInFlight = null; });
+  return opPromise;
 }
 
-// Steps that change the picture for good (background removal, upscale, halftone) turn their button green
-// and say "Done" when finished. Nothing is locked or disabled: running one again just asks Yes / No first
-// (see gsAskProceed). The green state is saved with every undo step, so Go Back / Undo / Redo put the button
-// exactly as it was, and loading a new picture or resetting the background puts every button back to normal.
+// Steps that change the picture for good (background removal, upscale, halftone) used to turn
+// their button permanently green and say "Done" when finished — removed per direct request after
+// it was spotted still showing on the Remove Background panel: every other "Done" tick on this
+// site turned out to be misleading the moment a later step changed the picture (see every fix
+// comment above this one), and these three are no different in spirit even though they ARE
+// properly tracked (dataset.done still gates "run this again?" via gsAskProceed below, and is
+// still restored correctly through Undo/Redo) — a permanent green tick reads as "this is finished,
+// move on to the next thing", which isn't a claim this button should be making on its own anymore.
+// dataset.done is kept for the confirmation-before-rerun behaviour; only the visual tick is gone.
 const DONE_IDS = ['applyBgRemove', 'applyUpscale', 'applyHalftone'];
 const DONE_LABELS = {};
 DONE_IDS.forEach(id => { DONE_LABELS[id] = document.getElementById(id).textContent; });
 function markDone(btn) {
   btn.disabled = false;
   btn.classList.remove('busy');
-  btn.classList.add('done-state');
   btn.dataset.done = '1';
-  btn.textContent = '✓ Done';
+  btn.textContent = DONE_LABELS[btn.id] || btn.textContent;
 }
 function clearDone(btn) {
   btn.disabled = false;

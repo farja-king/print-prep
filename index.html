@@ -64,7 +64,17 @@
     margin:0;
     /* No page scrolling once a design is loaded — see .wrap:has(.stage.on)
        below, which shrinks the intro/drop-zone and caps the preview to fit
-       whatever's left of the viewport instead. Matches Vector Prep. */
+       whatever's left of the viewport instead. Matches Vector Prep.
+       REAL BUG fixed alongside this: this standalone site's own header/version-tag and Buy Me a
+       Coffee / cross-promo row (re-added when this site was rebuilt from the app-embedded tool
+       source, which strips that branding since the app's own toolbar already provides it) were
+       never covered by this "everything fits one viewport" shrink logic — they just sat there at
+       full size always, eating into the exact fixed height budget the rest of this design assumes
+       it can reclaim. On a real laptop screen (shorter than this was ever tested against) that
+       pushed the bottom of the tool panels below the visible area with nothing to scroll to (body
+       is overflow:hidden below), which is exactly what "have to zoom out to 80%" and "cut off at
+       the bottom" both were. Fixed the same way .sub/.footnote already are below: hidden entirely
+       once a picture is loaded, since nobody needs the promo buttons once they're mid-edit. */
     overflow:hidden;
     background:var(--canvas);
     font-family:'Segoe UI',sans-serif;
@@ -78,6 +88,8 @@
 
   .wrap:has(.stage.on){padding-top:14px; padding-bottom:14px;}
   .wrap:has(.stage.on) .sub{display:none;}
+  .wrap:has(.stage.on) header{display:none;}
+  .wrap:has(.stage.on) .promo-row{display:none;}
   .wrap:has(.stage.on) .drop{padding:16px 20px; margin-bottom:10px;}
   .wrap:has(.stage.on) .footnote{display:none;}
   .wrap:has(.stage.on) .start-over-btn{margin-top:8px;}
@@ -542,7 +554,7 @@ html.gs-busy, html.gs-busy *{cursor:progress !important;}
   </header>
   <p class="sub">Production Tool. Built specifically for complex apparel illustrations,<br>High-density DTF processing.<br>All processing runs locally in your browser.</p>
 
-  <div style="margin:16px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+  <div class="promo-row" style="margin:16px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
     <a href="https://www.buymeacoffee.com/Vector_Print_Prep" target="_blank" style="display:block;flex-shrink:0;">
       <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" style="height:52px;width:188px;display:block;">
     </a>

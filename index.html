@@ -1674,6 +1674,22 @@ function applyColorKeyLive() {
     pristineSourceCanvas.width = w;
     pristineSourceCanvas.height = h;
     pristineSourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    // REAL BUG this fixes: the "Remove background" button used to be the ONLY place that ever
+    // called saveHistory() for colour-key mode — this live-preview handler deliberately never
+    // did, on the theory that the button click was still there to commit an actual checkpoint.
+    // Hiding that button (per direct request, since it visibly did nothing here — the canvas
+    // already showed the live result) removed the only thing creating an undo step for this
+    // entire mode, with nothing replacing it. Confirmed by direct repro: remove the background via
+    // sliders, Next Step into Colour Remover, remove a colour there, hit Undo — with no checkpoint
+    // ever recorded for the slider work, Undo had nothing to land on but the ORIGINAL image,
+    // background and all. Fixed by making this debounced settle-point (already the thing keeping
+    // pristineSourceCanvas correct above) commit a real history step too, the same as every other
+    // action that changes the canvas does — deliberately NOT copying the old button handler's own
+    // preRemovalCanvas-reset/holeSeeds-clear here, since those would corrupt the next slider
+    // adjustment's own recompute (it reads preRemovalCanvas as the untouched pre-removal source).
+    syncHalftoneCache();
+    syncColorAdjustCache();
+    saveHistory();
     updateMeta();
   }, 120);
 }

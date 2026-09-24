@@ -1785,6 +1785,13 @@ document.getElementById('applyColorAdjust').addEventListener('click', (e) => {
   });
 });
 document.getElementById('resetColorAdjust').addEventListener('click', (e) => {
+  // REAL BUG this also closes off: Reset always redraws the canvas from colorAdjustResetCanvas
+  // regardless of whether any slider was ever actually touched (all sliders sitting at 0 doesn't
+  // skip the redraw, it just makes the filters applied to it a no-op) - so if that cached canvas
+  // is even slightly out of step with the live one, Reset silently reverts real work (confirmed:
+  // clicking it after some touch-up strokes, with no colour adjustment ever made, wiped them).
+  // Desktop-gating this the same as the sliders/Apply closes that off entirely on this free site.
+  if (!requireDesktopApp('Colour adjustment')) return;
   runBusy(e.target, () => {
     caBrightness.value = 0; caBrightnessVal.value = 0;
     caContrast.value = 0; caContrastVal.value = 0;
@@ -1902,7 +1909,10 @@ document.getElementById('resetBgRemove').addEventListener('click', (e) => {
 // caller below already expects from the pre-existing Upscale check this was pulled out of.
 function requireDesktopApp(featureLabel) {
   if (window.graphicSuite) return true;
-  alert(`${featureLabel} is a desktop-app-only feature. You have to buy the desktop version — Graphical Magic — to use it. Everything else on this site stays free.`);
+  // No "everything else on this site stays free" line here on purpose — with Upscale, Resize AND
+  // Colour Adjustment all gated, that sentence was false the moment a second feature got gated
+  // alongside Upscale, and would have quietly undermined trust in this exact message.
+  alert(`${featureLabel} is a desktop-app-only feature. You have to buy the desktop version — Graphical Magic — to use it.`);
   return false;
 }
 
@@ -2389,7 +2399,23 @@ trimToContentBtn.addEventListener('click', () => {
     const savedPct = Math.round((1 - (sw * sh) / (w * h)) * 100);
     applyCropRect(minX, minY, sw, sh);
     trimStatus.textContent = `Trimmed to ${sw} × ${sh} (${savedPct}% less empty canvas).`;
-  }, false);
+  }, false, () => {
+    // REAL BUG fixed here: runBusy's default completion permanently marks a button "✓ Done" in
+    // green — correct for one-shot milestones like Remove Background/Halftone/Upscale (tracked in
+    // DONE_IDS, restored through Undo/Redo, and they ask "run again?" before repeating), but Trim
+    // to Content was never one of those — it isn't in DONE_IDS, has no re-run confirmation, no
+    // undo-aware tracking. It just inherited the same green tick as a side effect of also being
+    // routed through runBusy. The "correct" crop changes any time a later edit (a touch-up erase,
+    // hole removal, a background-removal re-run) changes what's actually opaque, so a permanent
+    // tick here goes stale immediately — confirmed exactly by a real repro: clicking Trim to
+    // Content again after removing something that was in the way still said "Done" from before,
+    // and needed a second click to actually re-trim. trimStatus above already gives fresh,
+    // accurate feedback every click — that's the real signal, this button doesn't need a second,
+    // staler one layered on top of it.
+    trimToContentBtn.disabled = false;
+    trimToContentBtn.classList.remove('busy');
+    trimToContentBtn.textContent = trimToContentBtn.dataset.originalText || 'Trim to Content';
+  });
 });
 
 cropMarqueeToggleBtn.addEventListener('click', () => {
@@ -2914,28 +2940,37 @@ window.addEventListener('mouseup', ()=>{
 // is the strongest practical deterrent available without a server-side component. Drawn onto a
 // throwaway copy of the canvas at export time only; the live working canvas the user keeps editing
 // never gets touched by this.
+// Deliberately a small, single bottom-right mark rather than the earlier full-canvas tiled
+// version — reconsidered after actually weighing it up: this site's audience is print/DTF
+// professionals who need a genuinely usable result to see this tool is worth paying to unlock more
+// of, not a ruined preview. A determined person can crop this out regardless of how aggressive it
+// is, so a heavy tiled mark mostly punishes the honest majority who'd never bother removing it -
+// exactly the people this free tier is meant to win over. This still carries attribution and a
+// soft nudge without costing the free result its actual usefulness.
 function drawExportWatermark(wctx, w, h) {
   wctx.save();
   const big = Math.max(w, h);
-  wctx.font = `bold ${Math.round(big * 0.042)}px Arial, sans-serif`;
+  const pad = Math.round(big * 0.018);
+  const fontSize = Math.max(11, Math.round(big * 0.022));
+  wctx.font = `600 ${fontSize}px Arial, sans-serif`;
+  const label = 'printprep.click';
+  const textW = wctx.measureText(label).width;
+  const chipW = textW + pad * 2, chipH = fontSize + pad * 1.4;
+  const chipX = w - chipW - pad, chipY = h - chipH - pad;
+  const r = chipH * 0.25;
+  wctx.beginPath();
+  wctx.moveTo(chipX + r, chipY);
+  wctx.arcTo(chipX + chipW, chipY, chipX + chipW, chipY + chipH, r);
+  wctx.arcTo(chipX + chipW, chipY + chipH, chipX, chipY + chipH, r);
+  wctx.arcTo(chipX, chipY + chipH, chipX, chipY, r);
+  wctx.arcTo(chipX, chipY, chipX + chipW, chipY, r);
+  wctx.closePath();
+  wctx.fillStyle = 'rgba(0,0,0,0.55)';
+  wctx.fill();
+  wctx.fillStyle = 'rgba(255,255,255,0.92)';
   wctx.textAlign = 'center';
   wctx.textBaseline = 'middle';
-  const label = 'PRINTPREP.CLICK FREE PREVIEW — BUY DESKTOP APP TO REMOVE';
-  const stepX = big * 0.62, stepY = big * 0.22, range = big * 1.5;
-  wctx.translate(w / 2, h / 2);
-  wctx.rotate(-Math.PI / 6);
-  for (let y = -range; y <= range; y += stepY) {
-    for (let x = -range; x <= range; x += stepX) {
-      // Fill (dark) + stroke (light) on every tile so the mark stays visible against both light
-      // and dark artwork - print-ready art here is very often light line-art on a transparent
-      // background, which a fill-only watermark can go almost invisible against.
-      wctx.lineWidth = Math.max(1, big * 0.0025);
-      wctx.strokeStyle = 'rgba(255,255,255,0.32)';
-      wctx.strokeText(label, x, y);
-      wctx.fillStyle = 'rgba(0,0,0,0.28)';
-      wctx.fillText(label, x, y);
-    }
-  }
+  wctx.fillText(label, chipX + chipW / 2, chipY + chipH / 2 + 1);
   wctx.restore();
 }
 

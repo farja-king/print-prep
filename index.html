@@ -86,6 +86,14 @@
 
   .wrap{max-width:960px;margin:0 auto;padding:36px 20px 60px;}
 
+  /* Base layout for the promo row lives here, not inline on the element, specifically so the
+     .wrap:has(.stage.on) .promo-row rule below can actually override it — an inline style="" always
+     wins over any stylesheet rule regardless of selector specificity, which is exactly what silently
+     defeated this hide-on-load rule the first time (confirmed by testing the live site: the header's
+     h1 correctly disappeared once a picture loaded since it had no inline style, but this row didn't,
+     since it did). Same bug shape as an earlier fix elsewhere in this project's [hidden] vs inline
+     display:flex conflict — author rules losing to something with higher specificity/origin. */
+  .promo-row{margin:16px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
   .wrap:has(.stage.on){padding-top:14px; padding-bottom:14px;}
   .wrap:has(.stage.on) .sub{display:none;}
   .wrap:has(.stage.on) header{display:none;}
@@ -554,7 +562,7 @@ html.gs-busy, html.gs-busy *{cursor:progress !important;}
   </header>
   <p class="sub">Production Tool. Built specifically for complex apparel illustrations,<br>High-density DTF processing.<br>All processing runs locally in your browser.</p>
 
-  <div class="promo-row" style="margin:16px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+  <div class="promo-row">
     <a href="https://www.buymeacoffee.com/Vector_Print_Prep" target="_blank" style="display:block;flex-shrink:0;">
       <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" style="height:52px;width:188px;display:block;">
     </a>

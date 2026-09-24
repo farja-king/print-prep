@@ -1538,11 +1538,20 @@ customGarmentColorInput.addEventListener('input', (e) => {
   setActiveSwatch(customGarmentColorInput.closest('.swatch-btn'));
 });
 
-bgMethod.addEventListener('change', () => {
+// Removed per direct request: in colour-key mode, the sliders already apply live to the canvas as
+// you drag them (see applyColorKeyLive) — by the time this button could be clicked, the result is
+// already there and you can move straight on to the next step without ever touching it, so it
+// wasn't doing anything a user would notice. Kept for AI mode, where there's no live preview and
+// this button is genuinely what runs the model — hiding it there would remove the only way to
+// trigger AI background removal at all.
+function updateBgMethodControls() {
   const isColor = bgMethod.value === 'color';
   colorKeyControls.style.display = isColor ? 'block' : 'none';
   aiModelControls.style.display = isColor ? 'none' : 'block';
-});
+  document.getElementById('applyBgRemove').style.display = isColor ? 'none' : 'block';
+}
+bgMethod.addEventListener('change', updateBgMethodControls);
+updateBgMethodControls();
 
 function updateMeta(){
   dimsEl.textContent = canvas.width + ' × ' + canvas.height;

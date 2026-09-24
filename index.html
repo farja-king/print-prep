@@ -441,6 +441,14 @@
   button.action:hover{background:var(--thread-red); border-color:var(--thread-red);}
   button.action:active{transform:translateY(1px);}
   button.action:disabled{cursor:wait; opacity:0.8;}
+  /* Desktop-only lock (see lockPanelForDesktopOnly below): overrides the "processing" look above
+     with a clearly permanent, "you can't use this" appearance — not "please wait". Specificity
+     (.gm-locked ancestor) beats the plain button.action:disabled rule above on purpose. */
+  .gm-locked input:disabled, .gm-locked select:disabled, .gm-locked button:disabled{
+    cursor:not-allowed !important;
+    opacity:0.4 !important;
+    filter:grayscale(0.4);
+  }
   button.action.busy{
     background:linear-gradient(90deg, var(--ink) 0%, var(--thread-red) 50%, var(--ink) 100%);
     background-size:220% 100%;
@@ -3321,7 +3329,7 @@ NEXT_STEP_SEQUENCE.slice(0, -1).forEach((panelId, i) => {
   wrap.style.cssText = 'margin-top:14px;padding-top:12px;border-top:1px solid var(--field-border);';
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'action';
+  btn.className = 'action next-step-btn';
   btn.textContent = 'Next Step →';
   btn.addEventListener('click', () => {
     const nextBtn = document.querySelector(`.rail-btn[data-panel="${nextId}"]`);
@@ -3330,6 +3338,31 @@ NEXT_STEP_SEQUENCE.slice(0, -1).forEach((panelId, i) => {
   wrap.appendChild(btn);
   panel.appendChild(wrap);
 });
+
+// REAL UX fix: the desktop-only gate used to only announce itself with an alert() the moment you
+// tried to actually use a locked tool — so you'd drag sliders, watch nothing happen, and only then
+// find out why. Now the whole panel is visibly and functionally locked the moment you open it:
+// every control inside is disabled and a clear red notice explains why, so there's nothing to
+// click to "find out" in the first place. Next Step and the panel's own close button stay usable
+// so a locked panel never becomes a dead end you can't navigate away from.
+function lockPanelForDesktopOnly(panelId, featureLabel) {
+  if (window.graphicSuite) return; // running inside the real desktop app - nothing to lock
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  panel.classList.add('gm-locked');
+  panel.querySelectorAll('input, select, button, textarea').forEach(el => {
+    if (el.classList.contains('popout-close') || el.classList.contains('next-step-btn')) return;
+    el.disabled = true;
+  });
+  const notice = document.createElement('div');
+  notice.style.cssText = 'background:rgba(229,88,107,0.14);border:1px solid rgba(229,88,107,0.45);color:#b0223a;font-weight:700;font-size:11.5px;line-height:1.5;padding:9px 10px;margin-bottom:12px;border-radius:2px;';
+  notice.textContent = `🔒 ${featureLabel} is a desktop-app-only feature. Please buy the desktop version to gain access to this tool.`;
+  const header = panel.querySelector('h3');
+  if (header) header.insertAdjacentElement('afterend', notice); else panel.prepend(notice);
+}
+lockPanelForDesktopOnly('upscaleBlock', 'AI Upscaling');
+lockPanelForDesktopOnly('resizeBlock', 'Resize to spec');
+lockPanelForDesktopOnly('panel-colour-adjust', 'Colour Adjustment');
 
 // loadFile's stage.classList.add('on') happens inside img.onload, which fires
 // asynchronously after img.src is set — calling openFirstPanelByDefault

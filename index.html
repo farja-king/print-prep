@@ -1340,13 +1340,24 @@ const DONE_IDS = ['applyBgRemove', 'applyUpscale', 'applyHalftone'];
 const DONE_LABELS = {};
 DONE_IDS.forEach(id => { DONE_LABELS[id] = document.getElementById(id).textContent; });
 function markDone(btn) {
-  btn.disabled = false;
+  // Same guard as clearDone below, for the same reason - a locked button (e.g. Upscale on this
+  // free site) must never come back to life via this shared bookkeeping, including if Undo/Redo
+  // restores a "done" flag through applyDoneFlags.
+  const panel = btn.closest('.gm-locked');
+  btn.disabled = !!panel;
   btn.classList.remove('busy');
   btn.dataset.done = '1';
   btn.textContent = DONE_LABELS[btn.id] || btn.textContent;
 }
 function clearDone(btn) {
-  btn.disabled = false;
+  // REAL BUG this fixes: clearAllDone() runs on every new image load and on Reset Background
+  // Extraction, unconditionally re-enabling applyUpscale (one of the three DONE_IDS buttons) —
+  // which silently undid the desktop-only lock on Upscale the moment an image was loaded, even
+  // though the panel still showed its red "buy the desktop version" notice and everything else in
+  // it stayed correctly disabled. Caught by testing: the panel LOOKED locked but the actual Upscale
+  // button wasn't. A locked panel's own gm-locked class (see lockPanelForDesktopOnly) now wins.
+  const panel = btn.closest('.gm-locked');
+  btn.disabled = !!panel;
   btn.classList.remove('busy', 'done-state');
   delete btn.dataset.done;
   btn.textContent = DONE_LABELS[btn.id] || btn.textContent;

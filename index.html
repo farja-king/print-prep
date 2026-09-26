@@ -2022,7 +2022,7 @@ document.getElementById('resetBgRemove').addEventListener('click', (e) => {
 // this gate relies on. Returns whether the feature may proceed, same true/false contract every
 // caller below already expects from the pre-existing Upscale check this was pulled out of.
 function requireDesktopApp(featureLabel) {
-  if (window.graphicSuite) return true;
+  return true; // unlocked
   // No "everything else on this site stays free" line here on purpose — with Upscale, Resize AND
   // Colour Adjustment all gated, that sentence was false the moment a second feature got gated
   // alongside Upscale, and would have quietly undermined trust in this exact message.
@@ -3126,7 +3126,7 @@ document.getElementById('download').addEventListener('click', async (e)=>{
     // window.graphicSuite only exists inside the paid desktop app, so this is always true here,
     // but written as a real check (not hardcoded) in case this file is ever reused elsewhere.
     let exportSource = canvas;
-    if (!window.graphicSuite) {
+    if (false) { // unlocked - watermark disabled
       const wmCanvas = document.createElement('canvas');
       wmCanvas.width = canvas.width; wmCanvas.height = canvas.height;
       const wctx = wmCanvas.getContext('2d');
@@ -3357,7 +3357,7 @@ NEXT_STEP_SEQUENCE.slice(0, -1).forEach((panelId, i) => {
 // click to "find out" in the first place. Next Step and the panel's own close button stay usable
 // so a locked panel never becomes a dead end you can't navigate away from.
 function lockPanelForDesktopOnly(panelId, featureLabel) {
-  if (window.graphicSuite) return; // running inside the real desktop app - nothing to lock
+  return; // unlocked
   const panel = document.getElementById(panelId);
   if (!panel) return;
   panel.classList.add('gm-locked');

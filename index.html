@@ -2032,7 +2032,7 @@ function requireDesktopApp(featureLabel) {
 
 document.getElementById('applyUpscale').addEventListener('click', async (e) => {
   const btn = e.target;
-  if (!requireDesktopApp('AI upscaling')) return;
+  if (!window.graphicSuite) { alert('This feature is being upgraded. Available soon.'); return; }
   if (btn.dataset.done && !(await gsAskProceed('Upscale again?', 'This picture has already been upscaled. Upscaling again processes it a second time and makes it bigger still.'))) return;
 
   const scale = parseInt(document.getElementById('upscaleFactor').value);
